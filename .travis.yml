@@ -31,12 +31,11 @@ script:
 
 deploy:
   provider: releases
-  file: iCCCTV.apk
-  skip_cleanup: true
-  on:
-    branch: master
   api_key:
-    secure: "I0F6q8TIkj7G1e1PDcnX+McePGqx+OSzM7GOaOIzqLGgM92+e6qTfk3h5TSaoYXHO3PWuWmD5yd6glv/XnNUL1KTGp+vvPbBNBlmb7fuN2pt59R/50tbUk/a1C2/hEcRrq1Ml2mD8K6gG8S4tglSm7kRdKU0AhiRgaDMjkzIg2lFpJytlAiVHVb3J3YJ4A6DUupXdIBvXEev4kcS/3ietsz9RyRjt9nA1qFvxlP+KJaYq2tT6vSaSgD0vNwUQZ2Y6yoM8CPchyZqxXKE9RJvDQsN/1u4w6itoVHZ0vyhoG0K7xLrLpdK6ir6Jw7qEUB4/JgZiJKzLnLQWJk1TATE8BY2zbVGMtya9ToRPTV1lLAkhL5+B1kgmd6HVc2/jmqBq/VkSFJjgBYUBJhdEFuPPPrtfP5i+shhPsBy6hyKcepOaqJjnJYm6K0y+Y1lp/lk4nJDFYPTAtumhsLE1AB2hu8vKnvBBun1shw/hU7yl6/QNSPksogQZYqqny6m1o/a/DYL5QJ8plO8T6Cdl9Xi56BPg8FCkkXi6IYeTLC89Ueh/e8Qk/tRELHUY9LWJ12EYqCi1KcQ7gAO0jZ8cuRreeXZDZRCm6F5NmkOmG57KVIQBh+PveGg/6sKQ2qFLntcTy7nC4tu1r/XSN+IK6dPM1/TVl4TT+IQfxYbXDSCqLM="
+    secure: QPZE3MN4jcb063JpSftb7SkIimcvWFdgyXk6/JghAEbAzqrFYTU2us/A+6Ii02mqdzPp+6bUE6ZedlKqmyJw1GAoYsdOaeK4rjJ+HEBeIbFD+PE+lk8QG61G8b9SXXX0SJlansDBo/7Wym8/qLH9JIjPB9cDVjQ1Zn0GXgr+5i106fg74pxm5pFgE3RlExyU+/2aiw1Rlovf8sqt+XNQsQNNIpTFR9YPD2atmP7LQ14g+3eGUsXje524uzhPmB/vKQIrc/ZckTqtuFhlK057kJPH3wd62Yo0N5c+wWMqsidyN6ghfXHQ/hEm7d/IuH8QUTaDZ+uqJVCWjD3bEDWB4ep6BpLgL8VV6cVaTJdfCBZsi7aqNIc3LhYtoaFAs6w/sTwfdUSKkt34GniuEcFfDcpNg4CTUaJBXqF38z+wJ9YR7THBWgXwMwoMLXEUNCd7oU2edg7mSXV3YWF4+odmnmo2Mu8RWAQ3yL1pt1D+LYuDw0ovuY+1XSTlCQ9Fo5S0xAFkTAJOKqYnGOIgAQP+tFhjyXwbLFxT4ZKBmYAJ7oShFIgHVd68MT2uLhLaHAE9ePiDdfqBUhQ0nZHPw/25KESo5HRq7xIRfDRJw2c3nvUGDtKLCnT+PoJtJRZbgWnPksNfQgkxFkq/HIC39UuzC1KBXCl+kUJ4ec/5wOmWN54=
+  file: iCCTV.apk
+  on:
+    repo: icctv/app
 
 
 cache:
@@ -44,6 +43,3 @@ cache:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
     - $HOME/.android/build-cache
-
-dd:
-  secure: DbfzW47kzgmX7kMHyzzdy4zOsArVuviQb8CABEzKS5a73IzbvchDU6NU/l6aC8V3v5+QCUPd6/khXy+hzXlJIMFjACAuimPgbQd5vEcnZveRUW/n1WGTYUtpzDf/15nbBH5DInpD4l20AYmQJUyl+Haw22F9ytYlDu0VNhTMAjXce+ala7bUB4OWIj07aNnbkjGCOLx21GXiyut7JvpyjDeTngh53azqHXMNmjqnCbTp/zpREsozj1XNfxzZ2vBdAIkDN9EyVAOmzQd7jYi6F7R2uG7DP2OQyBau15tm+Oj3sE97RYDgQL/X0h8VXA32xZmrX6mzRaF3c54vViggVQSbgZCfKtL60CEmQGB4HkHYPY+b7s8X2r7mrW6NR3vFVXlnjus+Gq7DoG1bJUx7VwC8HoLSflseR4412E5x1PoBbUluZD6XWYzfjUlH8bb39MRxBmcNeJk3vFAhRj9uYBuTHZl/jsQ2vAlEmeai3+c7gFsdscrZ79MfXiYc4AQEUeaFCy2QW5aVSwXlKI9Txq1uQfs65ckZoqa0TCg/qEerBiCBZU5W4u7Je65C5Hi6jz7ugN5wcs231ruZhoW023YcJTf12rzqiNHWvgkcr1cSyNcfPkE7ZltByexJH8+6Kea4a+WPMSJ3TdaslZCUVE0fryv7ziIZ0mNWdSZcOhY=
