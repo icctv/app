@@ -1,6 +1,8 @@
 #!/bin/bash
 echo "Signing..."
 
+set -e
+
 if [ -z ${TRAVIS_BUILD_DIR+x} ]; then
   echo "TRAVIS_BUILD_DIR is not set";
   exit 1;
@@ -33,7 +35,7 @@ fi
 
 cp $TRAVIS_BUILD_DIR/$KEYSTORE_FILE $HOME
 cd app/build/outputs/apk/
-jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/keystore.jks -storepass $KEYSTORE_PASSWORD -keypass $KEY_PASSWORD app-release-unsigned.apk $KEY_ALIAS
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/$KEYSTORE_FILE -storepass $KEYSTORE_PASSWORD -keypass $KEY_PASSWORD app-release-unsigned.apk $KEY_ALIAS
 
 echo "Verifying signature..."
 jarsigner -verify app-release-unsigned.apk
