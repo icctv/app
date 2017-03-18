@@ -7,7 +7,7 @@ echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/a
 
 echo y | android update sdk -u -a -t tools
 echo y | android update sdk -u -a -t platform-tools
-echo y | android update sdk -u -a -t build-tools-19.1.0
-echo y | android update sdk -u -a -t android-9
+echo y | android update sdk -u -a -t build-tools-$ANDROID_BUILD_TOOLS
+echo y | android update sdk -u -a -t android-$ANDROID_API
 echo y | android update sdk -u -a -t extra-google-m2repository
 echo y | android update sdk -u -a -t extra-android-m2repository
