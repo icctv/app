@@ -40,20 +40,5 @@ jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/$KEYSTORE
 echo "Verifying signature..."
 jarsigner -verify app-release-unsigned.apk
 
-echo "DEBUG ls, pwd"
-ls
-pwd
-
-echo "DEBUG: all build tools ls"
-ls ${ANDROID_HOME}build-tools/
-
-echo "DEBUG: version build tools ls"
-ls ${ANDROID_HOME}build-tools/$ANDROID_BUILD_TOOLS/
-
-
-echo "DEBUG: zipalign without arguments"
-${ANDROID_HOME}build-tools/$ANDROID_BUILD_TOOLS/zipalign
-
-
-echo "DEBUG: verify zipalign"
+echo "Running zipalign..."
 ${ANDROID_HOME}build-tools/$ANDROID_BUILD_TOOLS/zipalign -v 4 app-release-unsigned.apk $APK_NAME
