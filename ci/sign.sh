@@ -39,4 +39,4 @@ jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore $HOME/$KEYSTORE
 
 echo "Verifying signature..."
 jarsigner -verify app-release-unsigned.apk
-"${ANDROID_HOME}/build-tools/21.1.2/zipalign -v 4 app-release-unsigned.apk $APK_NAME"
+"${ANDROID_HOME}/build-tools/$ANDROID_BUILD_TOOLS/zipalign -v 4 app-release-unsigned.apk $APK_NAME"
