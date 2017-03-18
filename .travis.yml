@@ -4,8 +4,6 @@ sudo: false
 
 android:
   components:
-    - platform-tools
-    - tools
     - build-tools-19.1.0
     - extra
     - android-9
