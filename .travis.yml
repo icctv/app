@@ -33,7 +33,7 @@ deploy:
   provider: releases
   api_key:
     secure: QPZE3MN4jcb063JpSftb7SkIimcvWFdgyXk6/JghAEbAzqrFYTU2us/A+6Ii02mqdzPp+6bUE6ZedlKqmyJw1GAoYsdOaeK4rjJ+HEBeIbFD+PE+lk8QG61G8b9SXXX0SJlansDBo/7Wym8/qLH9JIjPB9cDVjQ1Zn0GXgr+5i106fg74pxm5pFgE3RlExyU+/2aiw1Rlovf8sqt+XNQsQNNIpTFR9YPD2atmP7LQ14g+3eGUsXje524uzhPmB/vKQIrc/ZckTqtuFhlK057kJPH3wd62Yo0N5c+wWMqsidyN6ghfXHQ/hEm7d/IuH8QUTaDZ+uqJVCWjD3bEDWB4ep6BpLgL8VV6cVaTJdfCBZsi7aqNIc3LhYtoaFAs6w/sTwfdUSKkt34GniuEcFfDcpNg4CTUaJBXqF38z+wJ9YR7THBWgXwMwoMLXEUNCd7oU2edg7mSXV3YWF4+odmnmo2Mu8RWAQ3yL1pt1D+LYuDw0ovuY+1XSTlCQ9Fo5S0xAFkTAJOKqYnGOIgAQP+tFhjyXwbLFxT4ZKBmYAJ7oShFIgHVd68MT2uLhLaHAE9ePiDdfqBUhQ0nZHPw/25KESo5HRq7xIRfDRJw2c3nvUGDtKLCnT+PoJtJRZbgWnPksNfQgkxFkq/HIC39UuzC1KBXCl+kUJ4ec/5wOmWN54=
-  file: iCCTV.apk
+  file: ./app/build/outputs/apk/iCCTV.apk
   on:
     repo: icctv/app
 

@@ -42,3 +42,7 @@ jarsigner -verify app-release-unsigned.apk
 
 echo "Running zipalign..."
 ${ANDROID_HOME}build-tools/$ANDROID_BUILD_TOOLS/zipalign -v 4 app-release-unsigned.apk $APK_NAME
+
+echo "Removing Keystore files..."
+rm $TRAVIS_BUILD_DIR/$KEYSTORE_FILE || true
+rm $HOME/$KEYSTORE_FILE || true
