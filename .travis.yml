@@ -1,0 +1,21 @@
+language: android
+jdk: oraclejdk8
+sudo: false
+
+android:
+  components:
+    - platform-tools
+    - tools
+    - build-tools-19.1.0
+    - extra
+    - android-9
+
+before_cache:
+  - rm -f  $HOME/.gradle/caches/modules-2/modules-2.lock
+  - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
+
+cache:
+  directories:
+    - $HOME/.gradle/caches/
+    - $HOME/.gradle/wrapper/
+    - $HOME/.android/build-cache
