@@ -47,5 +47,6 @@ echo "Removing Keystore files..."
 rm $TRAVIS_BUILD_DIR/$KEYSTORE_FILE || true
 rm $HOME/$KEYSTORE_FILE || true
 
-mv $APK_NAME $TRAVIS_BUILD_DIR
+mkdir -p $TRAVIS_BUILD_DIR/release
+mv $APK_NAME $TRAVIS_BUILD_DIR/release
 cd $TRAVIS_BUILD_DIR
