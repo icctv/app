@@ -46,3 +46,5 @@ ${ANDROID_HOME}build-tools/$ANDROID_BUILD_TOOLS/zipalign -v 4 app-release-unsign
 echo "Removing Keystore files..."
 rm $TRAVIS_BUILD_DIR/$KEYSTORE_FILE || true
 rm $HOME/$KEYSTORE_FILE || true
+
+mv $APK_NAME $TRAVIS_BUILD_DIR
