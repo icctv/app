@@ -37,7 +37,7 @@ deploy:
   skip_cleanup: true
   on:
     repo: icctv/app
-    all_branches: true
+    tags: true
 
 
 cache:
