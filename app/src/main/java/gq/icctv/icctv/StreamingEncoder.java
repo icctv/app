@@ -55,8 +55,12 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         public void run() {
             busy = false;
 
-            
+
             System.out.println(yuvFrame[0]);
         }
+    }
+
+    static {
+        System.loadLibrary("mpeg1stream");
     }
 }
