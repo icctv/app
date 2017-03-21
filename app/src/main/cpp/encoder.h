@@ -1,0 +1,4 @@
+#ifndef APP_MPEG1STREAM_H
+#define APP_MPEG1STREAM_H
+
+#endif //APP_MPEG1STREAM_H
