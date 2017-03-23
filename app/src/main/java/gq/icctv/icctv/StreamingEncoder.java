@@ -44,6 +44,11 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         // int size = width * height + width * height / 2
         int size = width * height;
 
+        // This is a weird hack as it still crashed on devices that have a high camera resolution
+        if (size > frame.length) {
+            size = frame.length;
+        }
+
         System.arraycopy(frame, 0, yuvFrame, 0, size);
 
         threadPool.execute(streamingEncoderTask);

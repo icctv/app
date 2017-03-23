@@ -11,5 +11,8 @@ echo y | android update sdk -u -a -t tools
 echo y | android update sdk -u -a -t platform-tools
 echo y | android update sdk -u -a -t build-tools-$ANDROID_BUILD_TOOLS
 echo y | android update sdk -u -a -t android-$ANDROID_API
+echo y | android update sdk -u -a -t ndk-bundle
+echo y | android update sdk -u -a -t cmake
+echo y | android update sdk -u -a -t lldb
 echo y | android update sdk -u -a -t extra-google-m2repository
 echo y | android update sdk -u -a -t extra-android-m2repository

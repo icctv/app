@@ -18,7 +18,7 @@ public class CameraView implements SurfaceHolder.Callback {
 
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
-    private Camera camera;
+    private Camera camera = null;
     private Camera.Size cameraSize;
     private List<int[]> cameraSupportedFps;
     private List<Camera.Size> cameraSupportedSizes;
