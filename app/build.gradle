@@ -10,6 +10,18 @@ android {
         versionCode 12
         versionName '1.2'
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+        ndk {
+            abiFilters 'x86', 'armeabi-v7a'
+        }
+        externalNativeBuild {
+            cmake {
+                arguments '-DANDROID_PLATFORM=android-9',
+                        '-DANDROID_TOOLCHAIN=clang',
+                        '-DANDROID_NATIVE_API_LEVEL=9'
+
+            }
+        }
+
     }
     buildTypes {
         release {
