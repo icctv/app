@@ -20,6 +20,8 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         surfaceView = s;
         threadPool = Executors.newFixedThreadPool(3);
         streamingEncoderTask = new StreamingEncoderTask();
+
+        System.out.println(getString());
     }
 
     public void onPreviewFrame(byte[] frame, Camera camera) {
@@ -59,13 +61,12 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         @Override
         public void run() {
             busy = false;
-
-
-            System.out.println(yuvFrame[0]);
         }
     }
 
+    private native String getString();
+
     static {
-        System.loadLibrary("mpeg1stream");
+        System.loadLibrary("encoder");
     }
 }
