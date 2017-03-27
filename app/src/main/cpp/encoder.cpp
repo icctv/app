@@ -63,10 +63,19 @@ extern "C" {
         LOGI(TAG, "Initialized");
     }
 
-    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixels) {
+    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixelsBuffer) {
         LOGI(TAG, "Encoding");
 
-        int length = env->GetArrayLength(pixels);
+        int length = env->GetArrayLength(pixelsBuffer);
+
+        uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
+
+        LOGI(TAG, "Pixels length according to C %i, [0]=%i", length, pixels[0]);
+
+        // Free the array without copying back changes ("abort")
+        env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
+        env->DeleteLocalRef(pixelsBuffer);
+
 
         LOGI(TAG, "Pixels length according to C %i", length);
         LOGI(TAG, "Encoded");
