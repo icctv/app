@@ -63,9 +63,12 @@ extern "C" {
         LOGI(TAG, "Initialized");
     }
 
-    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, void *pixels) {
+    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixels) {
         LOGI(TAG, "Encoding");
 
+        int length = env->GetArrayLength(pixels);
+
+        LOGI(TAG, "Pixels length according to C %i", length);
         LOGI(TAG, "Encoded");
 
         return 1;
