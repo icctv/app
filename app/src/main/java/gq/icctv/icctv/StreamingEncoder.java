@@ -77,6 +77,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         @Override
         public void run() {
             Log.i(TAG, "Pixel buffer length=" + pixelsBuffer.length + ", [0]=" + pixelsBuffer[0]);
+            nativeEncode(pixelsBuffer);
             busy = false;
         }
     }
