@@ -70,14 +70,43 @@ extern "C" {
 
         uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
 
-        LOGI(TAG, "Pixels length according to C %i, [0]=%i", length, pixels[0]);
+        // LOGI(TAG, "Pixels length according to C %i, [0]=%i", length, pixels[0]);
+
+        // The length of a stride is probably the width of the frame
+        int stride = self->in_width;
+
+        // Source pixels are in NV21 format: 2 planes, Y and UV
+        // [Y0 Y1 Y2 Y4 ...       ] <- Y plane (luma)
+        // [                      ]
+        // [                      ]
+        // [V0 U0 V1 U1 V2 U2 ... ] <- VU plane (chroma)
+        uint8_t *in_data[2] = { pixels, pixels + stride * self->in_height };
+
+        // In NV21, each of the two planes have the same stride (=width)
+        int in_linesize[2] = { stride, stride };
+
+        // LOGI(TAG, "Scaling in_linesize=%d, in_height=%d, in_width=%d, frame_linesize=%d",
+        //     in_linesize[0],
+        //     self->in_height,
+        //     self->in_width,
+        //     self->frame->linesize);
+
+        // LOGI(TAG, "Scaling in_data[0]=%u, in_data[1]=%u", (unsigned int) pixels[0], (unsigned int) pixels[1]);
+
+        // Perform pixel format conversion from NV21 to YV12 (YUV420P)
+        sws_scale(self->sws,
+                  in_data,
+                  in_linesize,
+                  0,
+                  self->in_height,
+                  self->frame->data,
+                  self->frame->linesize);
 
         // Free the array without copying back changes ("abort")
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
         env->DeleteLocalRef(pixelsBuffer);
 
 
-        LOGI(TAG, "Pixels length according to C %i", length);
         LOGI(TAG, "Encoded");
 
         return 1;
