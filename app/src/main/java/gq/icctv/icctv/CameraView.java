@@ -4,6 +4,7 @@ import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.hardware.Camera;
 import android.os.Build;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -14,7 +15,8 @@ public class CameraView implements SurfaceHolder.Callback {
     private static int HEIGHT = 640;
     private static int WIDTH = 480;
     private static double FPS = 25.0;
-    private static int buffersCount = 5;
+    private static final String TAG = "CameraView";
+    private static int buffersCount = 4;
 
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
@@ -30,7 +32,6 @@ public class CameraView implements SurfaceHolder.Callback {
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
-        streamingEncoder = new StreamingEncoder(s);
         surfaceHolder.addCallback(this);
     }
 
@@ -55,7 +56,6 @@ public class CameraView implements SurfaceHolder.Callback {
         camera.startPreview();
         camera.stopPreview();
         setupCamera();
-        // nativeInitMediaEncoder(cameraView.Width(), cameraView.Height());
         camera.startPreview();
     }
 
@@ -65,38 +65,57 @@ public class CameraView implements SurfaceHolder.Callback {
         cameraSize.height = cameraSupportedSizes.get(targetSizeIndex).height;
 
         int targetFpsIndex = getClosestSupportedFpsIndex(FPS);
-        int targetMaxFrameRate = cameraSupportedFps.get(targetFpsIndex)[0];
-        int targetMinFrameRate = cameraSupportedFps.get(targetFpsIndex)[1];
+        int targetMinFps = cameraSupportedFps.get(targetFpsIndex)[0];
+        int targetMaxFps = cameraSupportedFps.get(targetFpsIndex)[1];
+
+        Log.i(TAG, "Setting up camera w=" + cameraSize.width + " h=" + cameraSize.height + " fpsRange=" + targetMinFps / 1000 + "-" + targetMaxFps / 1000);
 
         Camera.Parameters cameraParameters = camera.getParameters();
         cameraParameters.setPreviewSize(cameraSize.width, cameraSize.height);
         cameraParameters.setPreviewFormat(ImageFormat.NV21);
-        cameraParameters.setPreviewFpsRange(targetMaxFrameRate, targetMinFrameRate);
+        cameraParameters.setPreviewFpsRange(targetMinFps, targetMaxFps);
         camera.setParameters(cameraParameters);
 
         // Allocate preview frame buffers
         PixelFormat pixelFormat = new PixelFormat();
         PixelFormat.getPixelFormatInfo(ImageFormat.NV21, pixelFormat);
         int bufferSize = cameraSize.width * cameraSize.height * pixelFormat.bitsPerPixel / 8;
-        byte[] buffer = null;
+
+        Log.i(TAG, "Pixel format NV21 bitsPerPixel=" + pixelFormat.bitsPerPixel + " bufferSize=" + bufferSize);
+        Log.i(TAG, "Allocating " + buffersCount + " preview buffers");
         for(int i = 0; i < buffersCount; i++) {
-            buffer = new byte[bufferSize];
+            byte[] buffer = new byte[bufferSize];
             camera.addCallbackBuffer(buffer);
         }
+        Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
         camera.setPreviewCallbackWithBuffer(streamingEncoder);
     }
 
     private int getClosestSupportedSizeIndex(int w, int h) {
-        double diff = Math.abs(cameraSupportedSizes.get(0).width * cameraSupportedSizes.get(0).height - w * h);
+        int candidatesSize = cameraSupportedSizes.size();
         int targetIndex = 0;
-        for(int i = 1; i < cameraSupportedSizes.size(); i++) {
-            double newDiff =  Math.abs(cameraSupportedSizes.get(i).width * cameraSupportedSizes.get(i).height - w * h);
-            if ( newDiff < diff) {
+
+        int candidateWidth = cameraSupportedSizes.get(0).width;
+        int candidateHeight = cameraSupportedSizes.get(0).height;
+
+        double diff = Math.abs(candidateWidth * candidateHeight - w * h);
+        Log.i(TAG, "Size candidate 1/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
+
+        for(int i = 1; i < candidatesSize; i++) {
+            candidateWidth = cameraSupportedSizes.get(i).width;
+            candidateHeight = cameraSupportedSizes.get(i).height;
+
+            Log.i(TAG, "Size candidate " + (i + 1) + "/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
+            double newDiff =  Math.abs(candidateWidth * candidateWidth - w * h);
+            if (newDiff < diff) {
                 diff = newDiff;
                 targetIndex = i;
             }
         }
+        Log.i(TAG, "Picked size candidate " + (targetIndex + 1) +
+                " (" + cameraSupportedSizes.get(targetIndex).width + "x" + cameraSupportedSizes.get(targetIndex).height + ") " +
+                "because it is closest to requested size " + WIDTH + "x" + HEIGHT);
         return targetIndex;
     }
 
