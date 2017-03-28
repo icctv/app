@@ -64,8 +64,6 @@ extern "C" {
     }
 
     JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixelsBuffer) {
-        LOGI(TAG, "Encoding");
-
         int length = env->GetArrayLength(pixelsBuffer);
 
         uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
@@ -75,7 +73,7 @@ extern "C" {
         // The length of a stride is probably the width of the frame
         int stride = self->in_width;
 
-        // Source pixels are in NV21 format: 2 planes, Y and UV
+        // Source pixels are in NV21 format: 2 planes, Y and VU
         // [Y0 Y1 Y2 Y4 ...       ] <- Y plane (luma)
         // [                      ]
         // [                      ]
@@ -102,6 +100,19 @@ extern "C" {
                   self->frame->data,
                   self->frame->linesize);
 
+
+        self->frame->pts++;
+        av_init_packet(&self->packet);
+        int success = 0;
+        avcodec_encode_video2(self->context, &self->packet, self->frame, &success);
+        if(success) {
+            LOGE(TAG, "WOHOOOOOO!");
+            // memcpy(encoded_data, self->packet.data, self->packet.size);
+        } else {
+            LOGE(TAG, "Failed to encode frame");
+        }
+        av_free_packet(&self->packet);
+
         // Free the array without copying back changes ("abort")
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
         env->DeleteLocalRef(pixelsBuffer);
@@ -109,7 +120,7 @@ extern "C" {
 
         LOGI(TAG, "Encoded");
 
-        return 1;
+        return success;
     }
 
 
