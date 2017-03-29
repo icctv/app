@@ -16,7 +16,7 @@ public class CameraView implements SurfaceHolder.Callback {
     private static int WIDTH = 480;
     private static int HEIGHT = 320;
     private static double FPS = 30.0;
-    private static int buffersCount = 4;
+    private static int buffersCount = 10;
 
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
@@ -60,6 +60,8 @@ public class CameraView implements SurfaceHolder.Callback {
     }
 
     private void setupCamera() {
+        Log.i(TAG, "Supported features: " + camera.getParameters().flatten());
+
         int targetSizeIndex = getClosestSupportedSizeIndex(WIDTH, HEIGHT);
         cameraSize.width = cameraSupportedSizes.get(targetSizeIndex).width;
         cameraSize.height = cameraSupportedSizes.get(targetSizeIndex).height;

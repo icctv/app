@@ -31,5 +31,7 @@ typedef struct {
     char data[0];
 } frame_t;
 
+int64_t getTimeNsec();
+void measurePerformance(int duration);
 
 #endif

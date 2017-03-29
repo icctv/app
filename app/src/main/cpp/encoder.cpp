@@ -1,15 +1,45 @@
 #include "encoder.h"
 
-extern "C" {
-    int64_t getTimeNsec() {
-        struct timespec now;
-        clock_gettime(CLOCK_MONOTONIC, &now);
-        return (int64_t) now.tv_sec*1000000000LL + now.tv_nsec;
+char TAG[] = "NativeEncoder";
+encoder_t *self;
+jmethodID addCallbackBuffer;
+jclass cameraClass;
+
+
+
+int64_t lastCheck = 0;
+int framesCount = 0;
+int durationSum = 0;
+void measurePerformance(int64_t time_start_ns) {
+    int64_t time_start_ms = (time_start_ns / 1000000);
+    int64_t now_ms = (getTimeNsec() / 1000000);
+    int duration = (int)(now_ms - time_start_ms);
+
+    framesCount++;
+    durationSum += duration;
+
+    int delta = (int)(now_ms - lastCheck);
+    if (delta >= 1000) {
+        int avgDuration = durationSum / framesCount;
+        int busyTime = (100 * durationSum) / delta;
+        LOGI(TAG, "avg duration per frame %d ms, %d%% busy, encoding at %d fps",
+             avgDuration,
+             busyTime,
+             framesCount);
+        // Reset timers
+        lastCheck = now_ms;
+        framesCount = 0;
+        durationSum = 0;
     }
+}
 
-    char TAG[] = "NativeEncoder";
-    encoder_t *self;
+int64_t getTimeNsec() {
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (int64_t) now.tv_sec*1000000000LL + now.tv_nsec;
+}
 
+extern "C" {
     JNIEXPORT jstring JNICALL Java_gq_icctv_icctv_StreamingEncoder_getConfiguration(JNIEnv *env, jobject) {
         char info[10000] = {0};
         sprintf(info, "%s\n", avcodec_configuration());
@@ -38,7 +68,7 @@ extern "C" {
         self->context->height = out_height;
         self->context->time_base.num = 1;
         self->context->time_base.den = 30;
-        self->context->gop_size = 30;
+        self->context->gop_size = 10;
         self->context->max_b_frames = 0;
         self->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
@@ -65,14 +95,18 @@ extern "C" {
             LOGE(TAG, "Could not create scale context");
         }
 
+        // Cache the Java method, as it needs to be called after processing each frame
+        // The magic string is the signature of the method, use this cmd to find it
+        //     javap -classpath sdk/platforms/android-9/android.jar -s -p android.hardware.Camera
+        jclass tmpCameraClass = env->FindClass("android/hardware/Camera");
+        cameraClass = (jclass)env->NewGlobalRef(tmpCameraClass);
+        addCallbackBuffer = env->GetMethodID(cameraClass, "addCallbackBuffer", "([B)V");
+
         LOGI(TAG, "Initialized");
     }
 
-    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixelsBuffer) {
+    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_onPreviewFrame(JNIEnv *env, jobject, jbyteArray pixelsBuffer, jobject camera) {
         int64_t time_start = getTimeNsec();
-        int duration = 1;
-        int fps = 0;
-
 
         int length = env->GetArrayLength(pixelsBuffer);
 
@@ -124,14 +158,12 @@ extern "C" {
 
         // Free the array without copying back changes ("abort")
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
+
+        // Give back the buffer to be filled again
+        env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
         env->DeleteLocalRef(pixelsBuffer);
 
-        duration = (int)((getTimeNsec() - time_start) / 1000000);
-        fps = (int)(1 / (duration / 1000.0));
-
-        LOGI(TAG, "took %d ms (%d fps)", duration, fps);
-
-        return success;
+        measurePerformance(time_start);
     }
 
 
