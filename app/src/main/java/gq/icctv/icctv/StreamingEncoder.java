@@ -38,7 +38,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
 
         int outWidth = surfaceWidth;
         int outHeight = surfaceHeight;
-        int bitrate = outWidth * 1500; // Estimate
+        int bitrate = outWidth * 3500; // Estimate
 
         pixelsBuffer = new byte[bufferSize];
         streamingEncoderTask = new StreamingEncoderTask();
@@ -57,6 +57,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private void encode(byte[] pixels) {
         // Skip this frame if we're still busy encoding the last one
         if (busy) {
+            Log.i(TAG, "Skipped frame");
             return;
         } else {
             busy = true;
@@ -66,6 +67,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
             Log.e(TAG, "Buffer size mismatch, copying " + pixels.length + " pixels into buffer sized " + pixelsBuffer.length);
         }
 
+        // This is fast (<<1ms), don't worry about bottleneck here
         System.arraycopy(pixels, 0, pixelsBuffer, 0, pixels.length);
 
         threadPool.execute(streamingEncoderTask);
@@ -76,7 +78,6 @@ public class StreamingEncoder implements Camera.PreviewCallback {
 
         @Override
         public void run() {
-            Log.i(TAG, "Pixel buffer length=" + pixelsBuffer.length + ", [0]=" + pixelsBuffer[0]);
             nativeEncode(pixelsBuffer);
             busy = false;
         }
