@@ -70,7 +70,9 @@ extern "C" {
 
     JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixelsBuffer) {
         int64_t time_start = getTimeNsec();
-        int64_t time_end = 0;
+        int duration = 1;
+        int fps = 0;
+
 
         int length = env->GetArrayLength(pixelsBuffer);
 
@@ -124,11 +126,10 @@ extern "C" {
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
         env->DeleteLocalRef(pixelsBuffer);
 
-        time_end = getTimeNsec();
+        duration = (int)((getTimeNsec() - time_start) / 1000000);
+        fps = (int)(1 / (duration / 1000.0));
 
-
-        LOGI(TAG, "took %d ms",
-             (int)((time_end - time_start) / 1000000));
+        LOGI(TAG, "took %d ms (%d fps)", duration, fps);
 
         return success;
     }
