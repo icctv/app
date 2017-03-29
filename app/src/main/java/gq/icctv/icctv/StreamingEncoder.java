@@ -18,7 +18,6 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     int bufferSize = 0;
     byte[] pixelsBuffer = null;
     ExecutorService threadPool;
-    StreamingEncoderTask streamingEncoderTask;
     private ReentrantLock reentrantLock = new ReentrantLock();
     private boolean busy = false;
 
@@ -41,54 +40,34 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         int bitrate = outWidth * 3500; // Estimate
 
         pixelsBuffer = new byte[bufferSize];
-        streamingEncoderTask = new StreamingEncoderTask();
 
         nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate);
     }
 
 
-    public void onPreviewFrame(byte[] pixels, Camera camera) {
-        reentrantLock.lock();
-        encode(pixels);
-        camera.addCallbackBuffer(pixels);
-        reentrantLock.unlock();
-    }
+//    public void onPreviewFrame(byte[] pixels, Camera camera) {
+//        reentrantLock.lock();
+//
+//        if (busy) {
+//            Log.i(TAG, "Skipped frame");
+//            return;
+//        } else {
+//            busy = true;
+//        }
 
-    private void encode(byte[] pixels) {
-        // Skip this frame if we're still busy encoding the last one
-        if (busy) {
-            Log.i(TAG, "Skipped frame");
-            return;
-        } else {
-            busy = true;
-        }
+//        nativeEncode(pixels);
 
-        if (pixels.length != pixelsBuffer.length) {
-            Log.e(TAG, "Buffer size mismatch, copying " + pixels.length + " pixels into buffer sized " + pixelsBuffer.length);
-        }
-
-        // This is fast (<<1ms), don't worry about bottleneck here
-        System.arraycopy(pixels, 0, pixelsBuffer, 0, pixels.length);
-
-        threadPool.execute(streamingEncoderTask);
-    }
-
-    private class StreamingEncoderTask implements Runnable {
-        private static final String TAG = "StreamingEncoderTask";
-
-        @Override
-        public void run() {
-            nativeEncode(pixelsBuffer);
-            busy = false;
-        }
-    }
+//        busy=false;
+//        camera.addCallbackBuffer(pixels);
+//        reentrantLock.unlock();
+//    }
 
     public void release() {
         nativeRelease();
     }
 
     private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate);
-    private native int nativeEncode(byte[] rgb_pixels);
+    public native void onPreviewFrame(byte[] pixels, Camera camera);
     private native void nativeRelease();
     private native String getConfiguration();
 
