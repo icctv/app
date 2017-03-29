@@ -1,6 +1,11 @@
 #include "encoder.h"
 
 extern "C" {
+    int64_t getTimeNsec() {
+        struct timespec now;
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        return (int64_t) now.tv_sec*1000000000LL + now.tv_nsec;
+    }
 
     char TAG[] = "NativeEncoder";
     encoder_t *self;
@@ -64,11 +69,12 @@ extern "C" {
     }
 
     JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeEncode(JNIEnv *env, jobject, jbyteArray pixelsBuffer) {
+        int64_t time_start = getTimeNsec();
+        int64_t time_end = 0;
+
         int length = env->GetArrayLength(pixelsBuffer);
 
         uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
-
-        // LOGI(TAG, "Pixels length according to C %i, [0]=%i", length, pixels[0]);
 
         // The length of a stride is probably the width of the frame
         int stride = self->in_width;
@@ -92,6 +98,7 @@ extern "C" {
         // LOGI(TAG, "Scaling in_data[0]=%u, in_data[1]=%u", (unsigned int) pixels[0], (unsigned int) pixels[1]);
 
         // Perform pixel format conversion from NV21 to YV12 (YUV420P)
+        // Scaling is fast (~1ms), don't worry about bottleneck here
         sws_scale(self->sws,
                   in_data,
                   in_linesize,
@@ -106,19 +113,22 @@ extern "C" {
         int success = 0;
         avcodec_encode_video2(self->context, &self->packet, self->frame, &success);
         if(success) {
-            LOGE(TAG, "WOHOOOOOO!");
             // memcpy(encoded_data, self->packet.data, self->packet.size);
         } else {
             LOGE(TAG, "Failed to encode frame");
         }
+
         av_free_packet(&self->packet);
 
         // Free the array without copying back changes ("abort")
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
         env->DeleteLocalRef(pixelsBuffer);
 
+        time_end = getTimeNsec();
 
-        LOGI(TAG, "Encoded");
+
+        LOGI(TAG, "took %d ms",
+             (int)((time_end - time_start) / 1000000));
 
         return success;
     }
@@ -127,13 +137,13 @@ extern "C" {
     JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeRelease(JNIEnv *env, jobject) {
         if (self == NULL) { return; }
 
-        LOGI("NativeEncoder", "Releasing");
+        LOGI(TAG, "Releasing");
         sws_freeContext(self->sws);
         avcodec_close(self->context);
         av_free(self->context);
         av_free(self->frame);
         free(self->frame_buffer);
         free(self);
-        LOGI("NativeEncoder", "Released");
+        LOGI(TAG, "Released");
     }
 }
