@@ -27,7 +27,7 @@ echo "$ANDROID_HOME"
 cd $ANDROID_HOME || exit 1
 
 wget --timeout=120 https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip -O ndk.zip >/dev/null
-unzip ndk.zip
+unzip ndk.zip >/dev/null
 mv android-ndk-* ndk-bundle
 export ANDROID_NDK="${ANDROID_HOME}ndk-bundle"
 export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
