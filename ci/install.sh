@@ -1,8 +1,19 @@
 #!/bin/bash
 
+echo "$ANDROID_HOME"
+
+cd $ANDROID_HOME || exit 1
+
+wget --timeout=120 http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86.bin -O ndk.bin >/dev/null
+md5sum ndk.bin | grep 70ed6d8c34e7e620c145b791e8eeef89
+7zr x ndk.bin >/dev/null
+
+export ANDROID_NDK="${ANDROID_HOME}android-ndk-r10d"
+
+cd - || exit 1
+
 export ADB_INSTALL_TIMEOUT=5
 
-echo "$ANDROID_HOME"
 mkdir "$ANDROID_HOME/licenses" || true
 echo -e "\n8933bad161af4178b1185d1a37fbf41ea5269c55" > "$ANDROID_HOME/licenses/android-sdk-license"
 echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$ANDROID_HOME/licenses/android-sdk-preview-license"
