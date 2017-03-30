@@ -7,8 +7,9 @@ cd $ANDROID_HOME || exit 1
 wget --timeout=120 http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86.bin -O ndk.bin >/dev/null
 md5sum ndk.bin | grep 70ed6d8c34e7e620c145b791e8eeef89
 7zr x ndk.bin >/dev/null
-
-export ANDROID_NDK="${ANDROID_HOME}android-ndk-r10d"
+mv android-ndk-r10d ndk-bundle
+export ANDROID_NDK="${ANDROID_HOME}ndk-bundle"
+export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
 
 cd - || exit 1
 
