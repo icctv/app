@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+sudo apt-get update
 sudo apt-get --quiet --yes install \
   build-essential \
   git \
@@ -17,6 +19,7 @@ sudo apt-get --quiet --yes install \
   libgd2-xpm \
   ia32-libs \
   ia32-libs-multiarch \
+  libstdc++6-4.7-dev \
   rpl >/dev/null
 
 echo "$ANDROID_HOME"
