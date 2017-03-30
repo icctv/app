@@ -1,5 +1,24 @@
 #!/bin/bash
 
+sudo apt-get --quiet --yes install \
+  build-essential \
+  git \
+  autoconf \
+  libtool \
+  pkg-config \
+  gperf \
+  gettext \
+  python-lxml \
+  libgd2-xpm \
+  ia32-libs \
+  ia32-libs-multiarch \
+  p7zip \
+  checkinstall \
+  libgd2-xpm \
+  ia32-libs \
+  ia32-libs-multiarch \
+  rpl >/dev/null
+
 echo "$ANDROID_HOME"
 
 cd $ANDROID_HOME || exit 1
@@ -10,6 +29,10 @@ md5sum ndk.bin | grep 70ed6d8c34e7e620c145b791e8eeef89
 mv android-ndk-r10d ndk-bundle
 export ANDROID_NDK="${ANDROID_HOME}ndk-bundle"
 export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
+export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
+
+echo "sdk.dir=$ANDROID_HOME" > $TRAVIS_BUILD_DIR/local.properties
+echo "ndk.dir=$ANDROID_NDK_HOME" > $TRAVIS_BUILD_DIR/local.properties
 
 cd - || exit 1
 
