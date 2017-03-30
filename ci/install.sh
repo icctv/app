@@ -26,10 +26,9 @@ echo "$ANDROID_HOME"
 
 cd $ANDROID_HOME || exit 1
 
-wget --timeout=120 http://dl.google.com/android/ndk/android-ndk-r10d-linux-x86.bin -O ndk.bin >/dev/null
-md5sum ndk.bin | grep 70ed6d8c34e7e620c145b791e8eeef89
-7zr x ndk.bin >/dev/null
-mv android-ndk-r10d ndk-bundle
+wget --timeout=120 https://dl.google.com/android/repository/android-ndk-r14b-linux-x86_64.zip -O ndk.zip >/dev/null
+unzip ndk.zip
+mv android-ndk-* ndk-bundle
 export ANDROID_NDK="${ANDROID_HOME}ndk-bundle"
 export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
 export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools:${ANDROID_NDK_HOME}
