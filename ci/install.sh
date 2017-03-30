@@ -17,4 +17,4 @@ echo y | android update sdk -u -a -t lldb
 echo y | android update sdk -u -a -t extra-google-m2repository
 echo y | android update sdk -u -a -t extra-android-m2repository
 
-bash $TRAVIS_BUILD_DIR/get_native_dependencies.sh
+bash $TRAVIS_BUILD_DIR/distribution/get_native_dependencies.sh
