@@ -8,4 +8,5 @@
 /release
 /captures
 .externalNativeBuild
-/distribution
+/distribution/ffmpeg*
+/distribution/libwebsockets*
