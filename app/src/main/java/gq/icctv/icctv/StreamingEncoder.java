@@ -44,24 +44,6 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate);
     }
 
-
-//    public void onPreviewFrame(byte[] pixels, Camera camera) {
-//        reentrantLock.lock();
-//
-//        if (busy) {
-//            Log.i(TAG, "Skipped frame");
-//            return;
-//        } else {
-//            busy = true;
-//        }
-
-//        nativeEncode(pixels);
-
-//        busy=false;
-//        camera.addCallbackBuffer(pixels);
-//        reentrantLock.unlock();
-//    }
-
     public void release() {
         nativeRelease();
     }
