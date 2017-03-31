@@ -82,8 +82,15 @@ extern "C" {
 
         // The magic constant 32 is the line size alignment which allows SIMD
         int frame_size = av_image_get_buffer_size(AV_PIX_FMT_YUV420P, out_width, out_height, 32);
+
+        LOGI(TAG, "Allocating %d bytes for frame buffer", frame_size);
+
         self->frame_buffer = malloc(frame_size);
+
         avpicture_fill((AVPicture*) self->frame, (uint8_t*) self->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
+
+        LOGI(TAG, "After filling picture, linesize is %d, %d", self->frame->linesize[0], self->frame->linesize[1]);
+
 
         self->sws = sws_getContext(
             in_width, in_height, AV_PIX_FMT_NV21,
@@ -110,10 +117,15 @@ extern "C" {
 
         int length = env->GetArrayLength(pixelsBuffer);
 
+        if (length < 1000) {
+            LOGE(TAG, "Received only %d pixels", length);
+            return;
+        }
+
         uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
 
-        // The length of a stride is probably the width of the frame
-        int stride = self->in_width;
+        // The length of a stride is the width of a plane in bytes
+        uint8_t stride = ((uint8_t)self->in_width) * (12 / 8);
 
         // Source pixels are in NV21 format: 2 planes, Y and VU
         // [Y0 Y1 Y2 Y4 ...       ] <- Y plane (luma)
@@ -125,23 +137,27 @@ extern "C" {
         // In NV21, each of the two planes have the same stride (=width)
         int in_linesize[2] = { stride, stride };
 
-        // LOGI(TAG, "Scaling in_linesize=%d, in_height=%d, in_width=%d, frame_linesize=%d",
+        // LOGI(TAG, "Scaling in_linesize=%d~%d, in_height=%d, in_width=%d, frame_linesize=%d~%d",
         //     in_linesize[0],
+        //     in_linesize[1],
         //     self->in_height,
         //     self->in_width,
-        //     self->frame->linesize);
+        //     self->frame->linesize[0],
+        //     self->frame->linesize[1]);
 
         // LOGI(TAG, "Scaling in_data[0]=%u, in_data[1]=%u", (unsigned int) pixels[0], (unsigned int) pixels[1]);
 
         // Perform pixel format conversion from NV21 to YV12 (YUV420P)
         // Scaling is fast (~1ms), don't worry about bottleneck here
-        sws_scale(self->sws,
+        int out_height = sws_scale(self->sws,
                   in_data,
                   in_linesize,
                   0,
                   self->in_height,
                   self->frame->data,
                   self->frame->linesize);
+
+        // LOGI(TAG, "Scaler returned output height %d", out_height);
 
 
         self->frame->pts++;

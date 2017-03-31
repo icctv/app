@@ -16,7 +16,7 @@ public class CameraView implements SurfaceHolder.Callback {
     private static int WIDTH = 480;
     private static int HEIGHT = 320;
     private static double FPS = 30.0;
-    private static int buffersCount = 10;
+    private static int buffersCount = 1;
 
     private SurfaceView surfaceView;
     private SurfaceHolder surfaceHolder;
