@@ -177,7 +177,7 @@ extern "C" {
 
         // Give back the buffer to be filled again
         env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
-        env->DeleteLocalRef(pixelsBuffer);
+        //env->DeleteLocalRef(pixelsBuffer);
 
         measurePerformance(time_start);
     }
