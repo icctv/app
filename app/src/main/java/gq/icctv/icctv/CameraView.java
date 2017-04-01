@@ -91,7 +91,7 @@ public class CameraView implements SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        streamingEncoder = new StreamingEncoder(surfaceView, bufferSize);
+        streamingEncoder = new StreamingEncoder(surfaceView);
         camera.setPreviewCallbackWithBuffer(streamingEncoder);
     }
 
