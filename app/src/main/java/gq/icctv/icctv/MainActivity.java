@@ -8,7 +8,14 @@ import android.view.SurfaceView;
 import android.view.Window;
 import android.view.WindowManager;
 
+import org.java_websocket.drafts.Draft_17;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
 public class MainActivity extends AppCompatActivity {
+
+    private static final String TAG = "MainActivity";
 
     private CameraView cameraView;
     private Sender sender;
@@ -26,17 +33,26 @@ public class MainActivity extends AppCompatActivity {
         permissionsManager = new PermissionsManager(this, MainActivity.this);
 
         if (permissionsManager.check()) {
+            startSender();
             startCamera();
         } else {
             permissionsManager.request();
         }
     }
 
+    private void startSender() {
+        try {
+            sender = new Sender(new URI(Sender.RELAY_URL), new Draft_17());
+            sender.connect();
+        } catch (URISyntaxException e) {
+            Log.e(TAG, "Malformed URL: " + Sender.RELAY_URL);
+            e.printStackTrace();
+        }
+    }
+
     private void startCamera() {
         SurfaceView cameraSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
-        cameraView = new CameraView(cameraSurfaceView);
-        sender = new Sender();
-        cameraView.setSender(sender);
+        cameraView = new CameraView(cameraSurfaceView, sender);
     }
 
     @Override

@@ -27,8 +27,9 @@ public class CameraView implements SurfaceHolder.Callback {
     private StreamingEncoder streamingEncoder;
     private Sender sender;
 
-    public CameraView (SurfaceView s) {
+    public CameraView (SurfaceView s, Sender sn) {
         surfaceView = s;
+        sender = sn;
         surfaceHolder = s.getHolder();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -134,10 +135,6 @@ public class CameraView implements SurfaceHolder.Callback {
             }
         }
         return targetIndex;
-    }
-
-    public void setSender(Sender s) {
-        sender = s;
     }
 
     @Override

@@ -7,6 +7,7 @@ import android.view.SurfaceView;
 public class StreamingEncoder implements Camera.PreviewCallback {
 
     private static final String TAG = "StreamingEncoder";
+    private static final int FRAME_BUFFER_SIZE = (1024 * 1024);
 
     private SurfaceView surfaceView;
     private Sender sender;
@@ -30,7 +31,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         int outHeight = surfaceHeight;
         int bitrate = outWidth * 3500; // Estimate
 
-        nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate);
+        nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE);
     }
 
     // This is a callback method that is invoked by native code
@@ -42,7 +43,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         nativeRelease();
     }
 
-    private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate);
+    private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate, int frameBufferSize);
     public native void onPreviewFrame(byte[] pixels, Camera camera);
     private native void nativeRelease();
     private native String getConfiguration();

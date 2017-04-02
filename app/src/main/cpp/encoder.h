@@ -26,7 +26,13 @@ typedef struct {
     SwsContext *sws;
 } encoder_t;
 
+typedef enum {
+    frame_type_video = 0xFA010000,
+    frame_type_audio = 0xFB010000
+} frame_type_t;
+
 typedef struct {
+    frame_type_t type;
     int size;
     char data[0];
 } frame_t;

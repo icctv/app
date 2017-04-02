@@ -1,7 +1,12 @@
 #include "encoder.h"
 
 char TAG[] = "NativeEncoder";
-encoder_t *self;
+
+encoder_t * self;
+frame_t * frame;
+
+int max_frame_buffer_size = 0;
+
 jclass cameraClass;
 jmethodID addCallbackBuffer;
 
@@ -48,11 +53,15 @@ extern "C" {
         return env->NewStringUTF(info);
     }
 
-    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env, jobject, int in_width, int in_height, int out_width, int out_height, int bitrate) {
+    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env, jobject, int in_width, int in_height, int out_width, int out_height, int bitrate, int frame_buffer_size) {
         LOGI(TAG, "Initializing");
 
+        max_frame_buffer_size = frame_buffer_size;
+        frame = (frame_t *) malloc(sizeof(frame_buffer_size));
         self = (encoder_t *) malloc(sizeof(encoder_t));
         memset(self, 0, sizeof(encoder_t));
+
+        frame->type = frame_type_video;
 
         self->in_width = in_width;
         self->in_height = in_height;
@@ -167,13 +176,41 @@ extern "C" {
 
         // LOGI(TAG, "Scaler returned output height %d", out_height);
 
-
         self->frame->pts++;
         av_init_packet(&self->packet);
         int success = 0;
         avcodec_encode_video2(self->context, &self->packet, self->frame, &success);
         if(success) {
-            // memcpy(encoded_data, self->packet.data, self->packet.size);
+            // Pass encoded frame to Java callback function
+            // LOGI(TAG, "Encoded packet size %d", self->packet.size);
+            if (self->packet.size > 0 && self->packet.size < max_frame_buffer_size) {
+                LOGI(TAG, "Encode successful");
+                frame->size = (sizeof(frame_t) + self->packet.size);
+
+                if (frame->size < max_frame_buffer_size) {
+
+                    LOGI(TAG, "Building jbytearray");
+
+
+                    jbyteArray jframe = env->NewByteArray(frame->size);
+
+                    LOGI(TAG, "Setting jbytearray region 0-%d", frame->size - 1);
+
+                    env->SetByteArrayRegion(jframe, 0, frame->size - 1,
+                                            (const jbyte *) (&self->packet.data));
+
+                    LOGI(TAG, "Calling back up into java");
+
+                    env->CallVoidMethod(streamingEncoderInstance, onEncodedFrame, jframe);
+
+                    env->DeleteLocalRef(jframe);
+                } else {
+                    LOGI(TAG, "Hacky Avoiding segfault, skipping frame");
+                }
+            } else {
+                LOGI(TAG, "Skipping callback because encoded frame size %d is zero or does not fit into maximum buffer size %d",
+                     self->packet.size, max_frame_buffer_size);
+            }
         } else {
             LOGE(TAG, "Failed to encode frame");
         }
@@ -184,17 +221,6 @@ extern "C" {
         // Give back the buffer to be filled again
         env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
 
-        // Pass encoded frame to Java callback function
-        LOGI(TAG, "Encoded packet size %d", self->packet.size);
-
-        if (self->packet.size > 0) {
-
-            LOGI(TAG, "Info 0=%d, 30=%d", self->packet.data[0], self->packet.data[30]);
-            jbyteArray frame = env->NewByteArray(self->packet.size);
-            env->SetByteArrayRegion(frame, 0, self->packet.size - 1,
-                                    (const jbyte *) (&self->packet.data));
-            env->CallVoidMethod(streamingEncoderInstance, onEncodedFrame, frame);
-        }
         av_free_packet(&self->packet);
 
         measurePerformance(time_start);
@@ -211,6 +237,7 @@ extern "C" {
         av_free(self->frame);
         free(self->frame_buffer);
         free(self);
+        free(frame);
         LOGI(TAG, "Released");
     }
 }
