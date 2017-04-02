@@ -14,25 +14,24 @@ public class PermissionsManager {
     AppCompatActivity activity;
 
 
-    public PermissionsManager(Context c, AppCompatActivity a) {
-        activity = a;
-        context = c;
+    public PermissionsManager(Context context, AppCompatActivity activity) {
+        this.activity = activity;
+        this.context = context;
     }
 
     public void request() {
-        if (ActivityCompat.shouldShowRequestPermissionRationale(activity,
-                Manifest.permission.CAMERA)) {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(this.activity, Manifest.permission.CAMERA)) {
             // TODO: Show explanation for permissions
         } else {
-            ActivityCompat.requestPermissions(activity,
-                    new String[]{Manifest.permission.READ_CONTACTS},
-                    PERMISSIONS_REQUEST_CAMERA);
+            ActivityCompat.requestPermissions(this.activity, new String[]{Manifest.permission.CAMERA}, PERMISSIONS_REQUEST_CAMERA);
         }
     }
 
     public boolean check() {
-        boolean granted = (ContextCompat.checkSelfPermission(context,
-                Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED);
+        boolean granted = false;
+        if(ContextCompat.checkSelfPermission(this.context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED){
+            granted = true;
+        }
         return granted;
     }
 }
