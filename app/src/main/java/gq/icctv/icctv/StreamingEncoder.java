@@ -31,6 +31,10 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate);
     }
 
+    public void onEncodedFrame(byte[] frame) {
+        Log.i(TAG, "JAVA: On Encoded Frame called" + frame[0] + "," + frame[30]);
+    }
+
     public void release() {
         nativeRelease();
     }

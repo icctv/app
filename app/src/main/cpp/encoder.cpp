@@ -2,9 +2,11 @@
 
 char TAG[] = "NativeEncoder";
 encoder_t *self;
-jmethodID addCallbackBuffer;
 jclass cameraClass;
+jmethodID addCallbackBuffer;
 
+jclass streamingEncoderClass;
+jmethodID onEncodedFrame;
 
 
 int64_t lastCheck = 0;
@@ -102,17 +104,23 @@ extern "C" {
             LOGE(TAG, "Could not create scale context");
         }
 
-        // Cache the Java method, as it needs to be called after processing each frame
+        // Cache the Java method to give back the preview buffer,
+        // as it needs to be called after processing each frame
         // The magic string is the signature of the method, use this cmd to find it
         //     javap -classpath sdk/platforms/android-9/android.jar -s -p android.hardware.Camera
         jclass tmpCameraClass = env->FindClass("android/hardware/Camera");
         cameraClass = (jclass)env->NewGlobalRef(tmpCameraClass);
         addCallbackBuffer = env->GetMethodID(cameraClass, "addCallbackBuffer", "([B)V");
 
+        // Also cache the callback method of the StreamingEncoder, onEncodedFrame
+        jclass tmpStreamingEncoderClass = env->FindClass("gq/icctv/icctv/StreamingEncoder");
+        streamingEncoderClass = (jclass)env->NewGlobalRef(tmpStreamingEncoderClass);
+        onEncodedFrame = env->GetMethodID(streamingEncoderClass, "onEncodedFrame", "([B)V");
+
         LOGI(TAG, "Initialized");
     }
 
-    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_onPreviewFrame(JNIEnv *env, jobject, jbyteArray pixelsBuffer, jobject camera) {
+    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_onPreviewFrame(JNIEnv *env, jobject streamingEncoderInstance, jbyteArray pixelsBuffer, jobject camera) {
         int64_t time_start = getTimeNsec();
 
         int length = env->GetArrayLength(pixelsBuffer);
@@ -170,14 +178,24 @@ extern "C" {
             LOGE(TAG, "Failed to encode frame");
         }
 
-        av_free_packet(&self->packet);
-
         // Free the array without copying back changes ("abort")
         env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
 
         // Give back the buffer to be filled again
         env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
-        //env->DeleteLocalRef(pixelsBuffer);
+
+        // Pass encoded frame to Java callback function
+        LOGI(TAG, "Encoded packet size %d", self->packet.size);
+
+        if (self->packet.size > 0) {
+
+            LOGI(TAG, "Info 0=%d, 30=%d", self->packet.data[0], self->packet.data[30]);
+            jbyteArray frame = env->NewByteArray(self->packet.size);
+            env->SetByteArrayRegion(frame, 0, self->packet.size - 1,
+                                    (const jbyte *) (&self->packet.data));
+            env->CallVoidMethod(streamingEncoderInstance, onEncodedFrame, frame);
+        }
+        av_free_packet(&self->packet);
 
         measurePerformance(time_start);
     }
