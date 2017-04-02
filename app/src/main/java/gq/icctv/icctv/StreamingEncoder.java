@@ -9,11 +9,13 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private static final String TAG = "StreamingEncoder";
 
     private SurfaceView surfaceView;
+    private Sender sender;
     private int surfaceHeight = 0;
     private int surfaceWidth = 0;
 
-    public StreamingEncoder (SurfaceView s) {
+    public StreamingEncoder (SurfaceView s, Sender sn) {
         surfaceView = s;
+        sender = sn;
 
         surfaceWidth = surfaceView.getWidth();
         surfaceHeight = surfaceView.getHeight();
@@ -31,8 +33,9 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate);
     }
 
+    // This is a callback method that is invoked by native code
     public void onEncodedFrame(byte[] frame) {
-        Log.i(TAG, "JAVA: On Encoded Frame called" + frame[0] + "," + frame[30]);
+        sender.sendFrame(frame);
     }
 
     public void release() {

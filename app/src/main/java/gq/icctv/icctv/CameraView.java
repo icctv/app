@@ -25,6 +25,7 @@ public class CameraView implements SurfaceHolder.Callback {
     private List<int[]> cameraSupportedFps;
     private List<Camera.Size> cameraSupportedSizes;
     private StreamingEncoder streamingEncoder;
+    private Sender sender;
 
     public CameraView (SurfaceView s) {
         surfaceView = s;
@@ -91,7 +92,7 @@ public class CameraView implements SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        streamingEncoder = new StreamingEncoder(surfaceView);
+        streamingEncoder = new StreamingEncoder(surfaceView, sender);
         camera.setPreviewCallbackWithBuffer(streamingEncoder);
     }
 
@@ -133,6 +134,10 @@ public class CameraView implements SurfaceHolder.Callback {
             }
         }
         return targetIndex;
+    }
+
+    public void setSender(Sender s) {
+        sender = s;
     }
 
     @Override

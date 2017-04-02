@@ -11,6 +11,7 @@ import android.view.WindowManager;
 public class MainActivity extends AppCompatActivity {
 
     private CameraView cameraView;
+    private Sender sender;
     private PermissionsManager permissionsManager;
 
     @Override
@@ -34,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
     private void startCamera() {
         SurfaceView cameraSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
         cameraView = new CameraView(cameraSurfaceView);
+        sender = new Sender();
+        cameraView.setSender(sender);
     }
 
     @Override
