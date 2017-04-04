@@ -197,7 +197,7 @@ extern "C" {
                     LOGI(TAG, "Setting jbytearray region 0-%d", frame->size - 1);
 
                     env->SetByteArrayRegion(jframe, 0, frame->size - 1,
-                                            (const jbyte *) (&self->packet.data));
+                                            (const jbyte *) (self->packet.data));
 
                     LOGI(TAG, "Calling back up into java");
 
