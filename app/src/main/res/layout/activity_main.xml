@@ -7,8 +7,8 @@
     tools:context="gq.icctv.icctv.MainActivity">
 
     <SurfaceView
-        android:layout_width="480px"
-        android:layout_height="320px"
+        android:layout_width="1280px"
+        android:layout_height="720px"
         android:id="@+id/surface_camera" />
 
 </FrameLayout>

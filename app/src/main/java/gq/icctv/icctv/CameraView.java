@@ -13,8 +13,8 @@ import java.util.List;
 public class CameraView implements SurfaceHolder.Callback {
 
     private static final String TAG = "CameraView";
-    private static int WIDTH = 480;
-    private static int HEIGHT = 320;
+    private static int WIDTH = 1280;
+    private static int HEIGHT = 720;
     private static double FPS = 30.0;
     private static int buffersCount = 1;
 
