@@ -68,7 +68,12 @@ extern "C" {
         self->out_width = out_width;
         self->out_height = out_height;
 
+        // Load all encoders
+        // This is the recommended thing to do, even if we only need one for mpeg1video
         avcodec_register_all();
+
+        // Same for the mpegts muxer, load all the muxers
+        av_register_all();
 
         self->codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
 
@@ -111,6 +116,42 @@ extern "C" {
 
         if (!self->sws) {
             LOGE(TAG, "Could not create scale context");
+        }
+
+        // Initialize muxer
+        LOGI(TAG, "Initializing muxer");
+        self->muxer = avformat_alloc_context();
+        if (!self->muxer) {
+            LOGE(TAG, "Could not create muxer context");
+        }
+
+        self->muxer->oformat = av_guess_format("mpegts", NULL, NULL);
+
+        if (!self->muxer->oformat) {
+            LOGE(TAG, "Could not find mpegts output format, did you call av_register_all?");
+        }
+
+        LOGI(TAG, "MPEG TS FLAGS: AVFMT_NOFILE=%d, AVFMT_NOSTREAMS=%d",
+             self->muxer->oformat->flags & AVFMT_NOFILE ? 1 : 0,
+             self->muxer->oformat->flags & AVFMT_NOSTREAMS ? 1 : 0);
+
+        LOGI(TAG, "Opening mpegts buffer in memory");
+        if(avio_open_dyn_buf(&self->muxer->pb) < 0) {
+            LOGE(TAG, "Could not open mpegts buffer in memory");
+        };
+
+        LOGI(TAG, "Creating stream");
+        self->stream = avformat_new_stream(self->muxer, self->codec);
+        if (!self->stream) {
+            LOGE(TAG, "Could not create stream");
+        }
+        self->stream->time_base = self->context->time_base;
+        self->stream->sample_aspect_ratio = self->context->sample_aspect_ratio;
+        avcodec_copy_context(self->stream->codec, self->context);
+
+        LOGI(TAG, "Writing mpegts header");
+        if (avformat_write_header(self->muxer, NULL) < 0) {
+            LOGE(TAG, "Could not write mpegts header");
         }
 
         // Cache the Java method to give back the preview buffer,
@@ -184,7 +225,10 @@ extern "C" {
             // Pass encoded frame to Java callback function
             // LOGI(TAG, "Encoded packet size %d", self->packet.size);
             if (self->packet.size > 0 && self->packet.size < max_frame_buffer_size) {
-                LOGI(TAG, "Encode successful");
+                LOGI(TAG, "Encode successful, muxing");
+
+
+
                 frame->size = (sizeof(frame_t) + self->packet.size);
 
                 if (frame->size < max_frame_buffer_size) {
@@ -232,6 +276,7 @@ extern "C" {
 
         LOGI(TAG, "Releasing");
         sws_freeContext(self->sws);
+        avformat_free_context(self->muxer);
         avcodec_close(self->context);
         av_free(self->context);
         av_free(self->frame);
