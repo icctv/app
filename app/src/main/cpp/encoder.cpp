@@ -130,12 +130,13 @@ extern "C" {
              self->muxer->oformat->flags & AVFMT_NOFILE ? 1 : 0,
              self->muxer->oformat->flags & AVFMT_NOSTREAMS ? 1 : 0);
 
-        LOGI(TAG, "Opening mpegts buffer in memory");
-        int output_buffer_size = 4096;
-        self->output_buffer = (uint8_t *) av_malloc(output_buffer_size);
-        self->output = avio_alloc_context(self->output_buffer, output_buffer_size, 1, NULL, NULL, NULL, NULL);
+        LOGI(TAG, "Opening mpegts http stream");
+//        int output_buffer_size = 4096   ;
+//        self->output_buffer = (uint8_t *) av_malloc(output_buffer_size);
+//        self->output = avio_alloc_context(self->output_buffer, output_buffer_size, 1, NULL, NULL, NULL, NULL);
+        avio_open2(&self->output, "http://192.168.1.108:3003/a", AVIO_FLAG_WRITE, NULL, NULL);
         if(!self->output) {
-            LOGE(TAG, "Could not open mpegts buffer in memory");
+            LOGE(TAG, "Could not open mpegts http stream");
         }
 
         self->muxer->pb = self->output;
@@ -234,43 +235,43 @@ extern "C" {
                     LOGE(TAG, "Failed to mux packet");
                 }
 
-                LOGI(TAG, "Maximum buffer size in bytes=%d", self->muxer->pb->buffer_size);
-
-                uint8_t needle1 = 0x47;
-                uint8_t needle2 = 0x01;
-                uint8_t needle3 = 0x00;
-                uint8_t syncs = 0;
-                uint32_t i = 0;
-
-                for(i = 0; i <= self->muxer->pb->buffer_size; i++) {
-                    if ((self->muxer->pb->buffer)[i] == needle1
-                        && (self->muxer->pb->buffer)[i+1] == needle2
-                        && (self->muxer->pb->buffer)[i+2] == needle3) {
-                        syncs++;
-                    };
-                }
-
-                LOGI(TAG, "Buffer contains sync marks=%d", syncs);
-
-                int bytes_to_send = (int)(self->muxer->pb->buf_end - self->muxer->pb->buffer);
-
-                LOGI(TAG, "Sending buffer bytes=%d", self->muxer->pb->buffer_size);
-
-
-                LOGI(TAG, "Building jbytearray");
-
-                jbyteArray jframe = env->NewByteArray(bytes_to_send);
-
-                LOGI(TAG, "Setting jbytearray region 0-%d", bytes_to_send);
-
-                env->SetByteArrayRegion(jframe, 0, bytes_to_send,
-                                        (const jbyte *) (self->muxer->pb->buffer));
-
-                LOGI(TAG, "Calling back up into java");
-
-                env->CallVoidMethod(streamingEncoderInstance, onEncodedFrame, jframe);
-
-                env->DeleteLocalRef(jframe);
+//                LOGI(TAG, "Maximum buffer size in bytes=%d", self->muxer->pb->buffer_size);
+//
+//                uint8_t needle1 = 0x47;
+//                uint8_t needle2 = 0x01;
+//                uint8_t needle3 = 0x00;
+//                uint8_t syncs = 0;
+//                uint32_t i = 0;
+//
+//                for(i = 0; i <= self->muxer->pb->buffer_size; i++) {
+//                    if ((self->muxer->pb->buffer)[i] == needle1
+//                        && (self->muxer->pb->buffer)[i+1] == needle2
+//                        && (self->muxer->pb->buffer)[i+2] == needle3) {
+//                        syncs++;
+//                    };
+//                }
+//
+//                LOGI(TAG, "Buffer contains sync marks=%d", syncs);
+//
+//                int bytes_to_send = (int)(self->muxer->pb->buf_end - self->muxer->pb->buffer);
+//
+//                LOGI(TAG, "Sending buffer bytes=%d", self->muxer->pb->buffer_size);
+//
+//
+//                LOGI(TAG, "Building jbytearray");
+//
+//                jbyteArray jframe = env->NewByteArray(bytes_to_send);
+//
+//                LOGI(TAG, "Setting jbytearray region 0-%d", bytes_to_send);
+//
+//                env->SetByteArrayRegion(jframe, 0, bytes_to_send,
+//                                        (const jbyte *) (self->muxer->pb->buffer));
+//
+//                LOGI(TAG, "Calling back up into java");
+//
+//                env->CallVoidMethod(streamingEncoderInstance, onEncodedFrame, jframe);
+//
+//                env->DeleteLocalRef(jframe);
             } else {
                 LOGI(TAG, "Skipping callback because encoded frame size %d is zero or does not fit into maximum buffer size %d",
                      self->packet.size, max_frame_buffer_size);
