@@ -296,14 +296,14 @@ extern "C" {
         if (self == NULL) { return; }
 
         LOGI(TAG, "Releasing");
-        sws_freeContext(self->sws);
-        avformat_free_context(self->muxer);
-        avcodec_close(self->context);
-        av_free(self->context);
-        av_free(self->frame);
-        av_free(self->output);
-        free(self->frame_buffer);
-        free(self->output_buffer);
+        if (self->sws) sws_freeContext(self->sws);
+        if (self->muxer) avformat_free_context(self->muxer);
+        if (self->context) avcodec_close(self->context);
+        if (self->context) av_free(self->context);
+        if (self->frame) av_free(self->frame);
+        if (self->output) av_free(self->output);
+        if (self->frame_buffer) free(self->frame_buffer);
+        if (self->output_buffer) free(self->output_buffer);
         free(self);
         LOGI(TAG, "Released");
     }
