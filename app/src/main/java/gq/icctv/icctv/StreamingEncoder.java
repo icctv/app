@@ -10,13 +10,11 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private static final int FRAME_BUFFER_SIZE = (1024 * 1024);
 
     private SurfaceView surfaceView;
-    private Sender sender;
     private int surfaceHeight = 0;
     private int surfaceWidth = 0;
 
-    public StreamingEncoder (SurfaceView s, Sender sn) {
+    public StreamingEncoder (SurfaceView s) {
         surfaceView = s;
-        sender = sn;
 
         surfaceWidth = surfaceView.getWidth();
         surfaceHeight = surfaceView.getHeight();
@@ -36,7 +34,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
 
     // This is a callback method that is invoked by native code
     public void onEncodedFrame(byte[] frame) {
-        sender.sendFrame(frame);
+        // noop
     }
 
     public void release() {
@@ -46,7 +44,6 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate, int frameBufferSize);
     public native void onPreviewFrame(byte[] pixels, Camera camera);
     private native void nativeRelease();
-    private native String getConfiguration();
 
     static {
         System.loadLibrary("encoder");

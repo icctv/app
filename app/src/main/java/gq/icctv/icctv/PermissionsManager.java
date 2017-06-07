@@ -34,4 +34,19 @@ public class PermissionsManager {
         }
         return granted;
     }
+
+    public boolean handleRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PermissionsManager.PERMISSIONS_REQUEST_CAMERA: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            default: {
+                return false;
+            }
+        }
+    }
 }

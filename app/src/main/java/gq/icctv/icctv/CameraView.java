@@ -25,11 +25,9 @@ public class CameraView implements SurfaceHolder.Callback {
     private List<int[]> cameraSupportedFps;
     private List<Camera.Size> cameraSupportedSizes;
     private StreamingEncoder streamingEncoder;
-    private Sender sender;
 
-    public CameraView (SurfaceView s, Sender sn) {
+    public CameraView (SurfaceView s) {
         surfaceView = s;
-        sender = sn;
         surfaceHolder = s.getHolder();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -93,7 +91,7 @@ public class CameraView implements SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        streamingEncoder = new StreamingEncoder(surfaceView, sender);
+        streamingEncoder = new StreamingEncoder(surfaceView);
         camera.setPreviewCallbackWithBuffer(streamingEncoder);
     }
 
