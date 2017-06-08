@@ -18,7 +18,6 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
 
     private int width = 0;
     private int height = 0;
-    private Camera.PreviewCallback previewCallback;
     private SurfaceView cameraPreview;
     private Thread currentThread;
     private SurfaceHolder surfaceHolder;
@@ -26,12 +25,17 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
     private Camera.Size cameraSize;
     private List<int[]> cameraSupportedFps;
     private List<Camera.Size> cameraSupportedSizes;
+    private Callback callback;
 
-    CameraView(SurfaceView cameraPreview, int width, int height, Camera.PreviewCallback previewCallback) {
+    CameraView(SurfaceView cameraPreview, int width, int height, Callback callback) {
         this.cameraPreview = cameraPreview;
-        this.previewCallback = previewCallback;
+        this.callback = callback;
         this.width = width;
         this.height = height;
+    }
+
+    public void setPreviewCallback(Camera.PreviewCallback previewCallback) {
+        camera.setPreviewCallbackWithBuffer(previewCallback);
     }
 
     @Override
@@ -141,7 +145,7 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        camera.setPreviewCallbackWithBuffer(previewCallback);
+        callback.onCameraReady(cameraSize.width, cameraSize.height);
     }
 
     private void release() {
@@ -221,5 +225,9 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
             }
         }
         return targetIndex;
+    }
+
+    public interface Callback {
+        void onCameraReady(int actualWidth, int actualHeight);
     }
 }

@@ -22,6 +22,7 @@ typedef struct {
 
     int in_width, in_height;
     int out_width, out_height;
+    char ingestUrl[2000];
 
     AVPacket packet;
     SwsContext *sws;

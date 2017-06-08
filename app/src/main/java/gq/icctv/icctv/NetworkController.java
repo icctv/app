@@ -17,9 +17,9 @@ public class NetworkController {
 
     private static String BASE_URL = "http://192.168.1.107:8080";
     private static String uuid;
-    private NetworkControllerCallback callback;
+    private Callback callback;
 
-    NetworkController(Context ctx, NetworkControllerCallback callback) {
+    NetworkController(Context ctx, Callback callback) {
         uuid = Settings.Secure.getString(ctx.getContentResolver(),
                 Settings.Secure.ANDROID_ID);
 
@@ -36,7 +36,7 @@ public class NetworkController {
             .getAsParsed(new TypeToken<HelloResponse>() {}, new ParsedRequestListener<HelloResponse>() {
                 @Override
                 public void onResponse(HelloResponse hello) {
-                    Log.i(TAG, "Got Hello response" + hello);
+                    Log.i(TAG, "Got Hello response");
                     callback.onHello(hello);
                 }
                 @Override
@@ -53,5 +53,9 @@ public class NetworkController {
         List<IngestPoint> in;
 
         HelloResponse() {}
+    }
+
+    public interface Callback {
+        void onHello(NetworkController.HelloResponse hello);
     }
 }

@@ -46,7 +46,15 @@ int64_t getTimeNsec() {
 }
 
 extern "C" {
-    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env, jobject, int in_width, int in_height, int out_width, int out_height, int bitrate, int frame_buffer_size) {
+    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env,
+                                                                                jobject,
+                                                                                int in_width,
+                                                                                int in_height,
+                                                                                int out_width,
+                                                                                int out_height,
+                                                                                int bitrate,
+                                                                                int frame_buffer_size,
+                                                                                jstring ingestUrlString) {
         LOGI(TAG, "Initializing");
 
         // This holds errors of libav
@@ -169,11 +177,16 @@ extern "C" {
              self->muxer->oformat->flags & AVFMT_NOFILE ? 1 : 0,
              self->muxer->oformat->flags & AVFMT_NOSTREAMS ? 1 : 0);
 
+        const char *ingestUrlTmp = env->GetStringUTFChars(ingestUrlString, JNI_FALSE);
+        char ingestUrl[2000];
+        strcpy(ingestUrl, ingestUrlTmp);
+        env->ReleaseStringUTFChars(ingestUrlString, ingestUrlTmp);
+
         LOGI(TAG, "Opening mpegts http stream");
 //        int output_buffer_size = 4096   ;
 //        self->output_buffer = (uint8_t *) av_malloc(output_buffer_size);
 //        self->output = avio_alloc_context(self->output_buffer, output_buffer_size, 1, NULL, NULL, NULL, NULL);
-        avio_open2(&self->output, "http://192.168.1.108:3003/a", AVIO_FLAG_WRITE, NULL, NULL);
+        avio_open2(&self->output, ingestUrl, AVIO_FLAG_WRITE, NULL, NULL);
         if(!self->output) {
             LOGE(TAG, "Could not open mpegts http stream");
             return -11;

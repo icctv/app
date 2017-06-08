@@ -8,22 +8,24 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private static final String TAG = "StreamingEncoder";
     private static final int FRAME_BUFFER_SIZE = (1024 * 1024);
 
-    private int surfaceHeight = 0;
-    private int surfaceWidth = 0;
+    private int actualHeight = 0;
+    private int actualWidth = 0;
+    private IngestPoint ingestPoint;
 
-    public StreamingEncoder (int width, int height) {
-        this.surfaceWidth = width;
-        this.surfaceHeight = height;
+    public StreamingEncoder (int actualWidth, int actualHeight, IngestPoint ingestPoint) {
+        this.actualWidth = actualWidth;
+        this.actualHeight = actualHeight;
+        this.ingestPoint = ingestPoint;
     }
 
     public boolean initialize() {
-        Log.i(TAG, "Initializing encoder for preview surface w=" + surfaceWidth + " h=" + surfaceHeight);
+        Log.i(TAG, "Initializing encoder for preview surface w=" + actualWidth + " h=" + actualHeight + " streaming to " + ingestPoint.url);
 
-        int outWidth = surfaceWidth;
-        int outHeight = surfaceHeight;
+        int outWidth = actualWidth;
+        int outHeight = actualHeight;
         int bitrate = outWidth * 3500; // Estimate
 
-        int ok = nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE);
+        int ok = nativeInitialize(actualWidth, actualHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE, ingestPoint.url);
         if (ok != 1) {
             Log.e(TAG, "Failed to initialize native encoder, error code was: " + ok);
             return false;
@@ -41,7 +43,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         nativeRelease();
     }
 
-    private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate, int frameBufferSize);
+    private native int nativeInitialize(int inWidth, int inHeight, int outWidth, int outHeight, int bitrate, int frameBufferSize, String ingestUrl);
     public native void onPreviewFrame(byte[] pixels, Camera camera);
     private native void nativeRelease();
 
