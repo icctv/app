@@ -46,16 +46,21 @@ int64_t getTimeNsec() {
 }
 
 extern "C" {
-    JNIEXPORT jstring JNICALL Java_gq_icctv_icctv_StreamingEncoder_getConfiguration(JNIEnv *env, jobject) {
-        char info[10000] = {0};
-        sprintf(info, "%s\n", avcodec_configuration());
-        return env->NewStringUTF(info);
-    }
-
-    JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env, jobject, int in_width, int in_height, int out_width, int out_height, int bitrate, int frame_buffer_size) {
+    JNIEXPORT int JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeInitialize(JNIEnv *env, jobject, int in_width, int in_height, int out_width, int out_height, int bitrate, int frame_buffer_size) {
         LOGI(TAG, "Initializing");
+
+        // This holds errors of libav
+        int err = 0;
+        char errbuf[100];
+
         max_frame_buffer_size = frame_buffer_size;
         self = (encoder_t *) malloc(sizeof(encoder_t));
+
+        if (!self) {
+            LOGE(TAG, "Could not allocate encoder");
+            return -1;
+        }
+
         memset(self, 0, sizeof(encoder_t));
 
         self->in_width = in_width;
@@ -72,7 +77,18 @@ extern "C" {
 
         self->codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
 
+        if (!self->codec) {
+            LOGE(TAG, "Could not find encoder");
+            return -2;
+        }
+
         self->context = avcodec_alloc_context3(self->codec);
+
+        if (!self->context) {
+            LOGE(TAG, "Could not allocate codec context");
+            return -3;
+        }
+
         self->context->dct_algo = FF_DCT_FASTINT;
         self->context->bit_rate = bitrate;
         self->context->width = out_width;
@@ -83,9 +99,20 @@ extern "C" {
         self->context->max_b_frames = 0;
         self->context->pix_fmt = AV_PIX_FMT_YUV420P;
 
-        avcodec_open2(self->context, self->codec, NULL);
+        err = avcodec_open2(self->context, self->codec, NULL);
+        if (err < 0) {
+            av_make_error_string(errbuf, 99, err);
+            LOGE(TAG, "Could not open codec, error was: %d - %s", err, errbuf);
+            return -4;
+        }
 
         self->frame = av_frame_alloc();
+
+        if (!self->frame) {
+            LOGE(TAG, "Could not allocate frame");
+            return -5;
+        }
+
         self->frame->format = AV_PIX_FMT_YUV420P;
         self->frame->width  = out_width;
         self->frame->height = out_height;
@@ -98,7 +125,16 @@ extern "C" {
 
         self->frame_buffer = malloc(frame_size);
 
-        avpicture_fill((AVPicture*) self->frame, (uint8_t*) self->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
+        if (!self->frame_buffer) {
+            LOGE(TAG, "Could not allocate frame buffer");
+            return -6;
+        }
+
+        err = avpicture_fill((AVPicture*) self->frame, (uint8_t*) self->frame_buffer, AV_PIX_FMT_YUV420P, out_width, out_height);
+        if (err < 0) {
+            LOGE(TAG, "Could not fill picture, error was: %s", errbuf);
+            return -7;
+        }
 
         LOGI(TAG, "After filling picture, linesize is %d, %d", self->frame->linesize[0], self->frame->linesize[1]);
 
@@ -111,6 +147,7 @@ extern "C" {
 
         if (!self->sws) {
             LOGE(TAG, "Could not create scale context");
+            return -8;
         }
 
         // Initialize muxer
@@ -118,12 +155,14 @@ extern "C" {
         self->muxer = avformat_alloc_context();
         if (!self->muxer) {
             LOGE(TAG, "Could not create muxer context");
+            return -9;
         }
 
         self->muxer->oformat = av_guess_format("mpegts", NULL, NULL);
 
         if (!self->muxer->oformat) {
             LOGE(TAG, "Could not find mpegts output format, did you call av_register_all?");
+            return -10;
         }
 
         LOGI(TAG, "MPEG TS FLAGS: AVFMT_NOFILE=%d, AVFMT_NOSTREAMS=%d",
@@ -137,6 +176,7 @@ extern "C" {
         avio_open2(&self->output, "http://192.168.1.108:3003/a", AVIO_FLAG_WRITE, NULL, NULL);
         if(!self->output) {
             LOGE(TAG, "Could not open mpegts http stream");
+            return -11;
         }
 
         self->muxer->pb = self->output;
@@ -145,6 +185,7 @@ extern "C" {
         self->stream = avformat_new_stream(self->muxer, self->codec);
         if (!self->stream) {
             LOGE(TAG, "Could not create stream");
+            return -12;
         }
         self->stream->time_base = self->context->time_base;
         self->stream->sample_aspect_ratio = self->context->sample_aspect_ratio;
@@ -154,8 +195,12 @@ extern "C" {
         avcodec_copy_context(self->stream->codec, self->context);
 
         LOGI(TAG, "Writing mpegts header");
-        if (avformat_write_header(self->muxer, NULL) < 0) {
-            LOGE(TAG, "Could not write mpegts header");
+        err = avformat_write_header(self->muxer, NULL);
+
+        if (err < 0) {
+            av_make_error_string(errbuf, 99, err);
+            LOGE(TAG, "Could not write mpegts header, error was: %d - %s", err, errbuf);
+            return -13;
         }
 
         // Cache the Java method to give back the preview buffer,
@@ -171,7 +216,8 @@ extern "C" {
         streamingEncoderClass = (jclass)env->NewGlobalRef(tmpStreamingEncoderClass);
         onEncodedFrame = env->GetMethodID(streamingEncoderClass, "onEncodedFrame", "([B)V");
 
-        LOGI(TAG, "Initialized");
+        LOGI(TAG, "Successfully finished initialization of native encoder");
+        return 1;
     }
 
     JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_onPreviewFrame(JNIEnv *env, jobject streamingEncoderInstance, jbyteArray pixelsBuffer, jobject camera) {
@@ -229,7 +275,7 @@ extern "C" {
             // Pass encoded frame to Java callback function
             // LOGI(TAG, "Encoded packet size %d", self->packet.size);
             if (self->packet.size > 0 && self->packet.size < max_frame_buffer_size) {
-                LOGI(TAG, "Encode successful, muxing");
+                // LOGI(TAG, "Encode successful, muxing");
 
                 if (av_interleaved_write_frame(self->muxer, &self->packet) < 0) {
                     LOGE(TAG, "Failed to mux packet");
@@ -293,18 +339,33 @@ extern "C" {
 
 
     JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_nativeRelease(JNIEnv *env, jobject) {
+        LOGI(TAG, "Releasing");
+
+        lastCheck = 0;
+        framesCount = 0;
+        durationSum = 0;
+
         if (self == NULL) { return; }
 
-        LOGI(TAG, "Releasing");
+        LOGI(TAG, "Releasing stream");
+        if (self->stream) avcodec_free_context(&self->stream->codec);
+
+        // TODO: Why does this segfault?
+        // LOGI(TAG, "Releasing muxer");
+        // if (self->muxer) avformat_free_context(self->muxer);
+
+        LOGI(TAG, "Releasing sws");
         if (self->sws) sws_freeContext(self->sws);
-        if (self->muxer) avformat_free_context(self->muxer);
-        if (self->context) avcodec_close(self->context);
-        if (self->context) av_free(self->context);
-        if (self->frame) av_free(self->frame);
-        if (self->output) av_free(self->output);
+
+        LOGI(TAG, "Releasing frame buffer");
         if (self->frame_buffer) free(self->frame_buffer);
-        if (self->output_buffer) free(self->output_buffer);
+
+        LOGI(TAG, "Releasing frame");
+        if (self->frame) av_frame_free(&self->frame);
+
+        LOGI(TAG, "Releasing self");
         free(self);
+
         LOGI(TAG, "Released");
     }
 }

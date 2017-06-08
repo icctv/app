@@ -7,6 +7,9 @@ import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import java.util.List;
 
@@ -18,7 +21,7 @@ public class CameraView implements SurfaceHolder.Callback {
     private static double FPS = 30.0;
     private static int buffersCount = 1;
 
-    private SurfaceView surfaceView;
+    private SurfaceView cameraPreview;
     private SurfaceHolder surfaceHolder;
     private Camera camera = null;
     private Camera.Size cameraSize;
@@ -26,17 +29,29 @@ public class CameraView implements SurfaceHolder.Callback {
     private List<Camera.Size> cameraSupportedSizes;
     private StreamingEncoder streamingEncoder;
 
-    public CameraView (SurfaceView s) {
-        surfaceView = s;
-        surfaceHolder = s.getHolder();
+    public CameraView (SurfaceView cameraPreview) {
+        this.cameraPreview = cameraPreview;
+        start();
+    }
+
+    private void start() {
+        initializeSurface();
+        startCamera();
+    }
+
+    private void initializeSurface() {
+        surfaceHolder = cameraPreview.getHolder();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
+
+        cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(WIDTH, HEIGHT));
+        surfaceHolder.setFixedSize(WIDTH, HEIGHT);
         surfaceHolder.addCallback(this);
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
+    private void startCamera() {
+        Log.i(TAG, "Starting camera");
         camera = Camera.open();
         cameraSize = camera.new Size(0, 0);
         Camera.Parameters cameraParameters = camera.getParameters();
@@ -56,11 +71,14 @@ public class CameraView implements SurfaceHolder.Callback {
         camera.startPreview();
         camera.stopPreview();
         setupCamera();
+
+        Log.i(TAG, "Starting camera preview");
         camera.startPreview();
     }
 
     private void setupCamera() {
-        Log.i(TAG, "Supported features: " + camera.getParameters().flatten());
+        Log.i(TAG, "Setting up camera");
+        Log.d(TAG, "Supported features: " + camera.getParameters().flatten());
 
         int targetSizeIndex = getClosestSupportedSizeIndex(WIDTH, HEIGHT);
         cameraSize.width = cameraSupportedSizes.get(targetSizeIndex).width;
@@ -91,8 +109,46 @@ public class CameraView implements SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        streamingEncoder = new StreamingEncoder(surfaceView);
-        camera.setPreviewCallbackWithBuffer(streamingEncoder);
+        streamingEncoder = new StreamingEncoder(cameraPreview);
+        if (streamingEncoder.initialize()) {
+            camera.setPreviewCallbackWithBuffer(streamingEncoder);
+        }
+    }
+
+    public void release() {
+        if (camera != null) {
+            camera.stopPreview();
+            camera.release();
+            camera = null;
+        }
+        if (surfaceHolder != null) {
+            surfaceHolder.removeCallback(this);
+            surfaceHolder = null;
+        }
+        if (cameraPreview != null) {
+            cameraPreview = null;
+        }
+        if (streamingEncoder != null) {
+            streamingEncoder.release();
+            streamingEncoder = null;
+        }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        Log.i(TAG, "Surface created");
+        startCamera();
+    }
+
+    @Override
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+        Log.i(TAG, "Surface changed: " + width + "x" + height);
+    }
+
+    @Override
+    public void surfaceDestroyed(SurfaceHolder holder) {
+        Log.i(TAG, "Surface destroyed");
+        release();
     }
 
     private int getClosestSupportedSizeIndex(int w, int h) {
@@ -103,13 +159,13 @@ public class CameraView implements SurfaceHolder.Callback {
         int candidateHeight = cameraSupportedSizes.get(0).height;
 
         double diff = Math.abs(candidateWidth * candidateHeight - w * h);
-        Log.i(TAG, "Size candidate 1/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
+        Log.d(TAG, "Size candidate 1/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
 
         for(int i = 1; i < candidatesSize; i++) {
             candidateWidth = cameraSupportedSizes.get(i).width;
             candidateHeight = cameraSupportedSizes.get(i).height;
 
-            Log.i(TAG, "Size candidate " + (i + 1) + "/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
+            Log.d(TAG, "Size candidate " + (i + 1) + "/" + candidatesSize + ": " + candidateWidth + "x" + candidateHeight);
             double newDiff =  Math.abs(candidateWidth * candidateWidth - w * h);
             if (newDiff < diff) {
                 diff = newDiff;
@@ -133,22 +189,5 @@ public class CameraView implements SurfaceHolder.Callback {
             }
         }
         return targetIndex;
-    }
-
-    @Override
-    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-
-    }
-
-    @Override
-    public void surfaceDestroyed(SurfaceHolder holder) {
-        if (camera != null) {
-            camera.stopPreview();
-            camera.release();
-            camera = null;
-        }
-        if (streamingEncoder != null) {
-            streamingEncoder.release();
-        }
     }
 }

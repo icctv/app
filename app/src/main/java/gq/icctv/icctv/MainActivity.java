@@ -5,6 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 
@@ -22,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i("MainActivity", "Hello");
+        Log.i(TAG, "Hello");
         Window win = getWindow();
         win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -39,8 +41,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startCamera() {
-        SurfaceView cameraSurfaceView = (SurfaceView) findViewById(R.id.surface_camera);
-        cameraView = new CameraView(cameraSurfaceView);
+        if (cameraView == null) {
+            SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
+            cameraView = new CameraView(cameraPreview);
+        }
+    }
+
+    private void releaseCamera() {
+        if (cameraView != null) {
+            cameraView.release();
+            cameraView = null;
+        }
     }
 
     @Override
@@ -50,5 +61,13 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // TODO: Handle denied camera permission
         }
+    }
+
+    public void debugStart(View btn) {
+        startCamera();
+    }
+
+    public void debugRelease(View btn) {
+        releaseCamera();
     }
 }

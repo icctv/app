@@ -15,12 +15,14 @@ public class StreamingEncoder implements Camera.PreviewCallback {
 
     public StreamingEncoder (SurfaceView s) {
         surfaceView = s;
+    }
 
+    public boolean initialize() {
         surfaceWidth = surfaceView.getWidth();
         surfaceHeight = surfaceView.getHeight();
 
         if (surfaceWidth == 0) {
-            return;
+            return false;
         }
 
         Log.i(TAG, "Initializing encoder for preview surface w=" + surfaceWidth + " h=" + surfaceHeight);
@@ -29,7 +31,13 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         int outHeight = surfaceHeight;
         int bitrate = outWidth * 3500; // Estimate
 
-        nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE);
+        int ok = nativeInitialize(surfaceWidth, surfaceHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE);
+        if (ok != 1) {
+            Log.e(TAG, "Failed to initialize native encoder, error code was: " + ok);
+            return false;
+        }
+
+        return true;
     }
 
     // This is a callback method that is invoked by native code
