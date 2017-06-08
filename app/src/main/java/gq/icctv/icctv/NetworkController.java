@@ -1,7 +1,5 @@
 package gq.icctv.icctv;
 
-import android.content.Context;
-import android.provider.Settings;
 import android.util.Log;
 
 import com.androidnetworking.AndroidNetworking;
@@ -19,12 +17,8 @@ public class NetworkController {
     private static String uuid;
     private Callback callback;
 
-    NetworkController(Context ctx, Callback callback) {
-        uuid = Settings.Secure.getString(ctx.getContentResolver(),
-                Settings.Secure.ANDROID_ID);
-
-        AndroidNetworking.initialize(ctx);
-
+    NetworkController(String uuid, Callback callback) {
+        this.uuid = uuid;
         this.callback = callback;
     }
 

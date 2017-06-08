@@ -2,39 +2,96 @@ package gq.icctv.icctv;
 
 import android.content.Context;
 import android.graphics.Camera;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.widget.LinearLayout;
 
-public class StreamingController implements NetworkController.Callback, CameraView.Callback {
+public class StreamingController implements Runnable, NetworkController.Callback, CameraView.Callback {
 
     private final static String TAG = "StreamingController";
 
-    StreamingStatusCallback statusCallback;
-    CameraView cameraView;
-    NetworkController networkController;
-    SurfaceView cameraPreview;
-    StreamingEncoder streamingEncoder;
-    IngestPoint ingestPoint;
+    private String uuid;
+    private Callback statusCallback;
+    private CameraView cameraView;
+    private NetworkController networkController;
+    private SurfaceView cameraPreview;
+    private StreamingEncoder streamingEncoder;
+    private IngestPoint ingestPoint;
+    private Thread currentThread;
+    private Handler mainHandler;
 
-    StreamingController(StreamingStatusCallback ctx, SurfaceView cameraPreview) {
-        this.statusCallback = ctx;
-        this.cameraPreview = cameraPreview;
-        this.networkController = new NetworkController((Context) ctx, this);
-
-        statusCallback.onStatusChanged(StreamingStatus.INITIAL);
+    public enum Status {
+        INITIAL,
+        HELLO,
+        INITIALIZING_CAMERA,
+        INITIALIZING_ENCODER,
+        STREAMING,
+        STOPPING,
+        STOPPED
     }
+
+    public interface Callback {
+        void onStatusChanged(Status status);
+    }
+
+    StreamingController(String uuid, SurfaceView cameraPreview, Callback statusCallback) {
+        this.uuid = uuid;
+        this.statusCallback = statusCallback;
+        this.cameraPreview = cameraPreview;
+        this.networkController = new NetworkController(uuid, this);
+        this.mainHandler = new Handler(((Context) statusCallback).getMainLooper());
+
+        setStatus(Status.INITIAL);
+    }
+
+    private void setStatus(final Status newStatus) {
+        Log.i(TAG, "Status changes to: " + newStatus);
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                statusCallback.onStatusChanged(newStatus);
+            }
+        });
+    }
+
+    @Override
+    public void run() {
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+        currentThread = Thread.currentThread();
+
+        start();
+
+        while (true) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Log.i(TAG, "Thread was interrupted");
+                break;
+            }
+
+            if (currentThread.isInterrupted()) {
+                Log.i(TAG, "Thread was interrupted from outside");
+                break;
+            }
+        }
+
+        stop();
+    }
+
 
     public void start() {
         Log.i(TAG, "Starting");
-        statusCallback.onStatusChanged(StreamingStatus.HELLO);
+        setStatus(Status.HELLO);
         networkController.hello();
     }
 
     @Override
     public void onHello(NetworkController.HelloResponse hello) {
         Log.i(TAG, "onHello");
-        statusCallback.onStatusChanged(StreamingStatus.TRYING);
+        setStatus(Status.INITIALIZING_CAMERA);
 
         // TODO: Fallback to other ingest points
         ingestPoint = hello.in.get(0);
@@ -44,33 +101,33 @@ public class StreamingController implements NetworkController.Callback, CameraVi
         // the onCameraReady callback where we get passed the actual supported closest resolution.
         cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(ingestPoint.width, ingestPoint.height));
         cameraView = new CameraView(cameraPreview, ingestPoint.width, ingestPoint.height, this);
-        new Thread(cameraView).start();
+        cameraView.initializeSurface();
     }
 
     // Okay, the camera has been initialized and here it tells us the actual resolution
     // that it is going to use. The next step is to fire up our StreamingEncoder.
     @Override
     public void onCameraReady(int actualWidth, int actualHeight) {
+        setStatus(Status.INITIALIZING_ENCODER);
+
         streamingEncoder = new StreamingEncoder(actualWidth, actualHeight, ingestPoint);
         streamingEncoder.initialize();
 
+        setStatus(Status.STREAMING);
         cameraView.setPreviewCallback(streamingEncoder);
     }
 
-    public void stop() {
-        Log.i(TAG, "Stopping");
-        statusCallback.onStatusChanged(StreamingStatus.STOPPING);
-
-        if (cameraView != null) cameraView.interrupt();
-        if (streamingEncoder != null) streamingEncoder.release();
-
-        statusCallback.onStatusChanged(StreamingStatus.STOPPED);
+    public void interrupt() {
+        currentThread.interrupt();
     }
 
-    public void debug() {
-        Log.i(TAG, "Debug called");
+    private void stop() {
+        Log.i(TAG, "Stopping");
+        setStatus(Status.STOPPING);
 
-        stop();
-        start();
+        if (cameraView != null) cameraView.release();
+        if (streamingEncoder != null) streamingEncoder.release();
+
+        setStatus(Status.STOPPED);
     }
 }

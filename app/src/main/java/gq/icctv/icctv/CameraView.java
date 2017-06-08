@@ -10,7 +10,7 @@ import android.view.SurfaceView;
 
 import java.util.List;
 
-public class CameraView implements Runnable, SurfaceHolder.Callback {
+public class CameraView implements SurfaceHolder.Callback {
 
     private static final String TAG = "CameraView";
     private static double FPS = 30.0;
@@ -38,38 +38,7 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
         camera.setPreviewCallbackWithBuffer(previewCallback);
     }
 
-    @Override
-    public void run() {
-        Log.i(TAG, "Thread running");
-
-        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-
-        currentThread = Thread.currentThread();
-
-        initializeSurface();
-
-        while (true) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Log.i(TAG, "Thread was interrupted");
-                break;
-            }
-
-            if (currentThread.isInterrupted()) {
-                Log.i(TAG, "Thread was interrupted from outside");
-                break;
-            }
-        }
-
-        release();
-    }
-
-    public void interrupt() {
-        currentThread.interrupt();
-    }
-
-    private void initializeSurface() {
+    public void initializeSurface() {
         surfaceHolder = cameraPreview.getHolder();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -148,7 +117,7 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
         callback.onCameraReady(cameraSize.width, cameraSize.height);
     }
 
-    private void release() {
+    public void release() {
         Log.i(TAG, "Releasing");
 
         if (camera != null) {

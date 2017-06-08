@@ -1,5 +1,6 @@
 package gq.icctv.icctv;
 
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,7 +10,9 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity implements StreamingStatusCallback {
+import com.androidnetworking.AndroidNetworking;
+
+public class MainActivity extends AppCompatActivity implements StreamingController.Callback {
 
     private static final String TAG = "MainActivity";
 
@@ -19,46 +22,61 @@ public class MainActivity extends AppCompatActivity implements StreamingStatusCa
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Window win = getWindow();
-        win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Window win = getWindow();
+        win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
         statusText = (TextView) findViewById(R.id.status_text);
 
+        String uuid = Settings.Secure.getString(this.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+
+        AndroidNetworking.initialize(this);
+
         permissionsManager = new PermissionsManager(this, MainActivity.this);
-        streamingController = new StreamingController(this, cameraPreview);
+        streamingController = new StreamingController(uuid, cameraPreview, this);
 
         if (permissionsManager.check()) {
-            streamingController.start();
+            startStream();
         } else {
             permissionsManager.request();
         }
     }
 
+    private void startStream() {
+        new Thread(streamingController).start();
+    }
+
+    private void stopStream() {
+        if (streamingController != null) streamingController.interrupt();
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (permissionsManager.handleRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            streamingController.start();
+            startStream();
         } else {
             // TODO: Handle denied camera permission
         }
     }
 
     @Override
-    public void onStatusChanged(StreamingStatus status) {
-        Log.i(TAG, "Streaming status changed to " + status);
+    public void onStatusChanged(StreamingController.Status status) {
         statusText.setText(status.toString());
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        streamingController.stop();
+        stopStream();
     }
 
-    public void debug(View btn) { streamingController.debug(); }
+    public void debug(View btn) {
+        stopStream();
+        startStream();
+    }
 
 }
