@@ -15,20 +15,8 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:onClick="debugRelease"
-        android:text="DEBUG: Release camera" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="debugStart"
-        android:text="DEBUG: Start camera" />
-
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:onClick="debugHello"
-        android:text="DEBUG: POST /hello" />
+        android:onClick="debug"
+        android:text="DEBUG: reset" />
 
 
     <TextView

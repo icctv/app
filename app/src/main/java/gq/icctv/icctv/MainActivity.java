@@ -7,79 +7,54 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.LinearLayout;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements StreamingStatusCallback {
 
     private static final String TAG = "MainActivity";
 
-    private CameraView cameraView;
+    private StreamingController streamingController;
     private PermissionsManager permissionsManager;
-    private NetworkController networkController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "Hello");
         Window win = getWindow();
         win.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
+
         permissionsManager = new PermissionsManager(this, MainActivity.this);
-        networkController = new NetworkController(this);
+        streamingController = new StreamingController(this, cameraPreview);
 
         if (permissionsManager.check()) {
-            networkController.hello();
-
-            // startCamera();
+            streamingController.start();
         } else {
             permissionsManager.request();
-        }
-    }
-
-    private void startCamera() {
-        if (cameraView == null) {
-            Log.i(TAG, "Starting camera");
-            int width = 176;
-            int height = 144;
-            SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
-            cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-            cameraView = new CameraView(cameraPreview, width, height);
-            new Thread(cameraView).start();
-        }
-    }
-
-    private void releaseCamera() {
-        if (cameraView != null) {
-            Log.i(TAG, "Releasing camera");
-            cameraView.interrupt();
-            cameraView = null;
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         if (permissionsManager.handleRequestPermissionsResult(requestCode, permissions, grantResults)) {
-            startCamera();
+            streamingController.start();
         } else {
             // TODO: Handle denied camera permission
         }
     }
 
     @Override
+    public void onStatusChanged(StreamingStatus status) {
+        Log.i(TAG, "Streaming status changed to " + status);
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
-        releaseCamera();
+        streamingController.stop();
     }
 
-    public void debugStart(View btn) {
-        startCamera();
-    }
+    public void debug(View btn) { streamingController.debug(); }
 
-    public void debugRelease(View btn) {
-        releaseCamera();
-    }
-
-    public void debugHello(View btn) { networkController.hello(); }
 }
