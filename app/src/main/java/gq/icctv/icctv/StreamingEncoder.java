@@ -2,29 +2,21 @@ package gq.icctv.icctv;
 
 import android.hardware.Camera;
 import android.util.Log;
-import android.view.SurfaceView;
 
 public class StreamingEncoder implements Camera.PreviewCallback {
 
     private static final String TAG = "StreamingEncoder";
     private static final int FRAME_BUFFER_SIZE = (1024 * 1024);
 
-    private SurfaceView surfaceView;
     private int surfaceHeight = 0;
     private int surfaceWidth = 0;
 
-    public StreamingEncoder (SurfaceView s) {
-        surfaceView = s;
+    public StreamingEncoder (int width, int height) {
+        this.surfaceWidth = width;
+        this.surfaceHeight = height;
     }
 
     public boolean initialize() {
-        surfaceWidth = surfaceView.getWidth();
-        surfaceHeight = surfaceView.getHeight();
-
-        if (surfaceWidth == 0) {
-            return false;
-        }
-
         Log.i(TAG, "Initializing encoder for preview surface w=" + surfaceWidth + " h=" + surfaceHeight);
 
         int outWidth = surfaceWidth;

@@ -18,6 +18,7 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
 
     private int width = 0;
     private int height = 0;
+    private Camera.PreviewCallback previewCallback;
     private SurfaceView cameraPreview;
     private Thread currentThread;
     private SurfaceHolder surfaceHolder;
@@ -25,10 +26,10 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
     private Camera.Size cameraSize;
     private List<int[]> cameraSupportedFps;
     private List<Camera.Size> cameraSupportedSizes;
-    private StreamingEncoder streamingEncoder;
 
-    CameraView(SurfaceView cameraPreview, int width, int height) {
+    CameraView(SurfaceView cameraPreview, int width, int height, Camera.PreviewCallback previewCallback) {
         this.cameraPreview = cameraPreview;
+        this.previewCallback = previewCallback;
         this.width = width;
         this.height = height;
     }
@@ -140,10 +141,7 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
         }
         Log.i(TAG, "Allocated " + buffersCount + " preview buffers");
 
-        streamingEncoder = new StreamingEncoder(cameraPreview);
-        if (streamingEncoder.initialize()) {
-            camera.setPreviewCallbackWithBuffer(streamingEncoder);
-        }
+        camera.setPreviewCallbackWithBuffer(previewCallback);
     }
 
     private void release() {
@@ -160,10 +158,6 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
         }
         if (cameraPreview != null) {
             cameraPreview = null;
-        }
-        if (streamingEncoder != null) {
-            streamingEncoder.release();
-            streamingEncoder = null;
         }
         if (currentThread != null) {
             currentThread = null;

@@ -14,6 +14,7 @@ public class StreamingController implements NetworkControllerCallback {
     CameraView cameraView;
     NetworkController networkController;
     SurfaceView cameraPreview;
+    StreamingEncoder streamingEncoder;
 
     StreamingController(StreamingStatusCallback ctx, SurfaceView cameraPreview) {
         this.statusCallback = ctx;
@@ -32,14 +33,17 @@ public class StreamingController implements NetworkControllerCallback {
         // TODO: Fallback to other ingest points
         IngestPoint ingestPoint = hello.in.get(0);
 
-        // TODO: Manage StreamingEncoder here; don't pass IngestPoint to CameraView
-        startCamera(ingestPoint);
+        streamingEncoder = new StreamingEncoder(ingestPoint.width, ingestPoint.height);
+        streamingEncoder.initialize();
+
+        startCamera(ingestPoint, streamingEncoder);
     }
 
     public void stop() {
         Log.i(TAG, "Stopping");
 
         if (cameraView != null) cameraView.interrupt();
+        if (streamingEncoder != null) streamingEncoder.release();
     }
 
     public void debug() {
@@ -49,9 +53,9 @@ public class StreamingController implements NetworkControllerCallback {
         start();
     }
 
-    private void startCamera(IngestPoint ingestPoint) {
+    private void startCamera(IngestPoint ingestPoint, StreamingEncoder streamingEncoder) {
         cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(ingestPoint.width, ingestPoint.height));
-        cameraView = new CameraView(cameraPreview, ingestPoint.width, ingestPoint.height);
+        cameraView = new CameraView(cameraPreview, ingestPoint.width, ingestPoint.height, streamingEncoder);
         new Thread(cameraView).start();
     }
 }
