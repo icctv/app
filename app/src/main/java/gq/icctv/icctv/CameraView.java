@@ -70,7 +70,6 @@ public class CameraView implements Runnable, SurfaceHolder.Callback {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
 
-        surfaceHolder.setFixedSize(width, height);
         surfaceHolder.addCallback(this);
 
         // If the surface has already been created, the surfaceCreated callback won't fire again.
