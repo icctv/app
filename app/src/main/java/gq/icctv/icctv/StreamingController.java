@@ -1,7 +1,6 @@
 package gq.icctv.icctv;
 
 import android.content.Context;
-import android.graphics.Camera;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.widget.LinearLayout;
@@ -20,16 +19,21 @@ public class StreamingController implements NetworkControllerCallback {
         this.statusCallback = ctx;
         this.cameraPreview = cameraPreview;
         this.networkController = new NetworkController((Context) ctx, this);
+
+        statusCallback.onStatusChanged(StreamingStatus.INITIAL);
     }
 
     public void start() {
         Log.i(TAG, "Starting");
-        statusCallback.onStatusChanged(StreamingStatus.INITIAL);
+        statusCallback.onStatusChanged(StreamingStatus.HELLO);
         networkController.hello();
     }
 
     @Override
     public void onHello(NetworkController.HelloResponse hello) {
+        Log.i(TAG, "onHello");
+        statusCallback.onStatusChanged(StreamingStatus.TRYING);
+
         // TODO: Fallback to other ingest points
         IngestPoint ingestPoint = hello.in.get(0);
 
@@ -41,9 +45,12 @@ public class StreamingController implements NetworkControllerCallback {
 
     public void stop() {
         Log.i(TAG, "Stopping");
+        statusCallback.onStatusChanged(StreamingStatus.STOPPING);
 
         if (cameraView != null) cameraView.interrupt();
         if (streamingEncoder != null) streamingEncoder.release();
+
+        statusCallback.onStatusChanged(StreamingStatus.STOPPED);
     }
 
     public void debug() {

@@ -7,6 +7,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity implements StreamingStatusCallback {
 
@@ -14,6 +15,7 @@ public class MainActivity extends AppCompatActivity implements StreamingStatusCa
 
     private StreamingController streamingController;
     private PermissionsManager permissionsManager;
+    private TextView statusText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements StreamingStatusCa
         setContentView(R.layout.activity_main);
 
         SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
+        statusText = (TextView) findViewById(R.id.status_text);
 
         permissionsManager = new PermissionsManager(this, MainActivity.this);
         streamingController = new StreamingController(this, cameraPreview);
@@ -47,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements StreamingStatusCa
     @Override
     public void onStatusChanged(StreamingStatus status) {
         Log.i(TAG, "Streaming status changed to " + status);
+        statusText.setText(status.toString());
     }
 
     @Override

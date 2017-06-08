@@ -1,5 +1,9 @@
 package gq.icctv.icctv;
 
 public enum StreamingStatus {
-    INITIAL
+    INITIAL,
+    HELLO,
+    TRYING,
+    STOPPING,
+    STOPPED
 }
