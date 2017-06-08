@@ -1,19 +1,13 @@
 package gq.icctv.icctv;
 
-import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-
-import org.java_websocket.drafts.Draft_17;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -42,14 +36,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void startCamera() {
         if (cameraView == null) {
+            Log.i(TAG, "Starting camera");
+            int width = 176;
+            int height = 144;
             SurfaceView cameraPreview = (SurfaceView) findViewById(R.id.camera_preview);
-            cameraView = new CameraView(cameraPreview);
+            cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+            cameraView = new CameraView(cameraPreview, width, height);
+            new Thread(cameraView).start();
         }
     }
 
     private void releaseCamera() {
         if (cameraView != null) {
-            cameraView.release();
+            Log.i(TAG, "Releasing camera");
+            cameraView.interrupt();
             cameraView = null;
         }
     }
@@ -61,6 +61,12 @@ public class MainActivity extends AppCompatActivity {
         } else {
             // TODO: Handle denied camera permission
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        releaseCamera();
     }
 
     public void debugStart(View btn) {

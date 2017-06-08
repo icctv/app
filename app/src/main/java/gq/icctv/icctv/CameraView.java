@@ -7,21 +7,19 @@ import android.os.Build;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
 
 import java.util.List;
 
-public class CameraView implements SurfaceHolder.Callback {
+public class CameraView implements Runnable, SurfaceHolder.Callback {
 
     private static final String TAG = "CameraView";
-    private static int WIDTH = 176;
-    private static int HEIGHT = 144;
     private static double FPS = 30.0;
     private static int buffersCount = 1;
 
+    private int width = 0;
+    private int height = 0;
     private SurfaceView cameraPreview;
+    private Thread currentThread;
     private SurfaceHolder surfaceHolder;
     private Camera camera = null;
     private Camera.Size cameraSize;
@@ -29,14 +27,41 @@ public class CameraView implements SurfaceHolder.Callback {
     private List<Camera.Size> cameraSupportedSizes;
     private StreamingEncoder streamingEncoder;
 
-    public CameraView (SurfaceView cameraPreview) {
+    CameraView(SurfaceView cameraPreview, int width, int height) {
         this.cameraPreview = cameraPreview;
-        start();
+        this.width = width;
+        this.height = height;
     }
 
-    private void start() {
+    @Override
+    public void run() {
+        Log.i(TAG, "Thread running");
+
+        android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
+
+        currentThread = Thread.currentThread();
+
         initializeSurface();
-        startCamera();
+
+        while (true) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Log.i(TAG, "Thread was interrupted");
+                break;
+            }
+
+            if (currentThread.isInterrupted()) {
+                Log.i(TAG, "Thread was interrupted from outside");
+                break;
+            }
+        }
+
+        release();
+    }
+
+    public void interrupt() {
+        currentThread.interrupt();
     }
 
     private void initializeSurface() {
@@ -45,9 +70,16 @@ public class CameraView implements SurfaceHolder.Callback {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
 
-        cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(WIDTH, HEIGHT));
-        surfaceHolder.setFixedSize(WIDTH, HEIGHT);
+        surfaceHolder.setFixedSize(width, height);
         surfaceHolder.addCallback(this);
+
+        // If the surface has already been created, the surfaceCreated callback won't fire again.
+        // We can then proceed to use the surface immediately.
+        if (surfaceHolder.getSurface().isValid()) {
+            startCamera();
+        }
+
+        Log.i(TAG, "Initialized surface");
     }
 
     private void startCamera() {
@@ -80,7 +112,7 @@ public class CameraView implements SurfaceHolder.Callback {
         Log.i(TAG, "Setting up camera");
         Log.d(TAG, "Supported features: " + camera.getParameters().flatten());
 
-        int targetSizeIndex = getClosestSupportedSizeIndex(WIDTH, HEIGHT);
+        int targetSizeIndex = getClosestSupportedSizeIndex(width, height);
         cameraSize.width = cameraSupportedSizes.get(targetSizeIndex).width;
         cameraSize.height = cameraSupportedSizes.get(targetSizeIndex).height;
 
@@ -115,7 +147,9 @@ public class CameraView implements SurfaceHolder.Callback {
         }
     }
 
-    public void release() {
+    private void release() {
+        Log.i(TAG, "Releasing");
+
         if (camera != null) {
             camera.stopPreview();
             camera.release();
@@ -132,6 +166,11 @@ public class CameraView implements SurfaceHolder.Callback {
             streamingEncoder.release();
             streamingEncoder = null;
         }
+        if (currentThread != null) {
+            currentThread = null;
+        }
+
+        Log.i(TAG, "Released");
     }
 
     @Override
@@ -174,7 +213,7 @@ public class CameraView implements SurfaceHolder.Callback {
         }
         Log.i(TAG, "Picked size candidate " + (targetIndex + 1) +
                 " (" + cameraSupportedSizes.get(targetIndex).width + "x" + cameraSupportedSizes.get(targetIndex).height + ") " +
-                "because it is closest to requested size " + WIDTH + "x" + HEIGHT);
+                "because it is closest to requested size " + width + "x" + height);
         return targetIndex;
     }
 
