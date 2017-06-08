@@ -15,6 +15,7 @@ public class MainActivity extends AppCompatActivity {
 
     private CameraView cameraView;
     private PermissionsManager permissionsManager;
+    private NetworkController networkController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,9 +27,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         permissionsManager = new PermissionsManager(this, MainActivity.this);
+        networkController = new NetworkController(this);
 
         if (permissionsManager.check()) {
-            startCamera();
+            networkController.hello();
+
+            // startCamera();
         } else {
             permissionsManager.request();
         }
@@ -76,4 +80,6 @@ public class MainActivity extends AppCompatActivity {
     public void debugRelease(View btn) {
         releaseCamera();
     }
+
+    public void debugHello(View btn) { networkController.hello(); }
 }

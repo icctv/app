@@ -24,5 +24,17 @@
         android:onClick="debugStart"
         android:text="DEBUG: Start camera" />
 
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="debugHello"
+        android:text="DEBUG: POST /hello" />
+
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/status"
+        android:text="Hello"/>
 
 </LinearLayout>
