@@ -226,8 +226,22 @@ extern "C" {
 
         // Also cache the callback method of the StreamingEncoder, onEncodedFrame
         jclass tmpStreamingEncoderClass = env->FindClass("gq/icctv/icctv/StreamingEncoder");
+
+        if (!tmpStreamingEncoderClass) {
+            LOGE(TAG, "Cannot get native reference to StreamingEncoder class");
+            return -14;
+        }
+
         streamingEncoderClass = (jclass)env->NewGlobalRef(tmpStreamingEncoderClass);
         onEncodedFrame = env->GetMethodID(streamingEncoderClass, "onEncodedFrame", "([B)V");
+
+        if (!onEncodedFrame) {
+            // NOTE: If you segfault with onEncodedFrame being null, it probably means that
+            // the something called the native onPreviewFrame method without the native
+            // encoder being fully initialized.
+            LOGE(TAG, "Cannot get native reference to onEncodedFrame method");
+            return -15;
+        }
 
         LOGI(TAG, "Successfully finished initialization of native encoder");
         return 1;
