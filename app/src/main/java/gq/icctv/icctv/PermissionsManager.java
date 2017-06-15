@@ -7,19 +7,19 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 
-public class PermissionsManager {
+class PermissionsManager {
 
-    static final int PERMISSIONS_REQUEST_CAMERA = 1;
-    Context context;
-    AppCompatActivity activity;
+    private static final int PERMISSIONS_REQUEST_CAMERA = 1;
+    private Context context;
+    private AppCompatActivity activity;
 
 
-    public PermissionsManager(Context context, AppCompatActivity activity) {
+    PermissionsManager(Context context, AppCompatActivity activity) {
         this.activity = activity;
         this.context = context;
     }
 
-    public void request() {
+    void request() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(this.activity, Manifest.permission.CAMERA)) {
             // TODO: Show explanation for permissions
         } else {
@@ -35,7 +35,7 @@ public class PermissionsManager {
         return granted;
     }
 
-    public boolean handleRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    boolean handleRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
             case PermissionsManager.PERMISSIONS_REQUEST_CAMERA: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {

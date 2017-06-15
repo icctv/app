@@ -10,11 +10,9 @@ import android.view.SurfaceView;
 
 import java.util.List;
 
-public class CameraView implements SurfaceHolder.Callback {
+class CameraView implements SurfaceHolder.Callback {
 
     private static final String TAG = "CameraView";
-    private static double FPS = 30.0;
-    private static int buffersCount = 1;
 
     private int width = 0;
     private int height = 0;
@@ -27,6 +25,8 @@ public class CameraView implements SurfaceHolder.Callback {
     private List<Camera.Size> cameraSupportedSizes;
     private Callback callback;
 
+    class InitializationException extends RuntimeException {}
+
     CameraView(SurfaceView cameraPreview, int width, int height, Callback callback) {
         this.cameraPreview = cameraPreview;
         this.callback = callback;
@@ -34,11 +34,11 @@ public class CameraView implements SurfaceHolder.Callback {
         this.height = height;
     }
 
-    public void setPreviewCallback(Camera.PreviewCallback previewCallback) {
+    void setPreviewCallback(Camera.PreviewCallback previewCallback) {
         camera.setPreviewCallbackWithBuffer(previewCallback);
     }
 
-    public void initializeSurface() {
+    void initializeSurface() {
         surfaceHolder = cameraPreview.getHolder();
         if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
@@ -56,29 +56,28 @@ public class CameraView implements SurfaceHolder.Callback {
     }
 
     private void startCamera() {
-        Log.i(TAG, "Starting camera");
-        camera = Camera.open();
-        cameraSize = camera.new Size(0, 0);
-        Camera.Parameters cameraParameters = camera.getParameters();
-        cameraSupportedFps = cameraParameters.getSupportedPreviewFpsRange();
-        cameraSupportedSizes = cameraParameters.getSupportedPreviewSizes();
-        cameraSize = cameraSupportedSizes.get(cameraSupportedSizes.size() / 2);
-        cameraParameters.setPreviewSize(cameraSize.width, cameraSize.height);
-        camera.setParameters(cameraParameters);
-
         try {
+            Log.i(TAG, "Starting camera");
+            camera = Camera.open();
+            cameraSize = camera.new Size(0, 0);
+            Camera.Parameters cameraParameters = camera.getParameters();
+            cameraSupportedFps = cameraParameters.getSupportedPreviewFpsRange();
+            cameraSupportedSizes = cameraParameters.getSupportedPreviewSizes();
+            cameraSize = cameraSupportedSizes.get(cameraSupportedSizes.size() / 2);
+            cameraParameters.setPreviewSize(cameraSize.width, cameraSize.height);
+            camera.setParameters(cameraParameters);
             camera.setPreviewDisplay(surfaceHolder);
+            camera.setPreviewCallbackWithBuffer(null);
+            camera.startPreview();
+            camera.stopPreview();
+            setupCamera();
+
+            Log.i(TAG, "Starting camera preview");
+            camera.startPreview();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error starting camera: " + e.getMessage());
+            throw new InitializationException();
         }
-
-        camera.setPreviewCallbackWithBuffer(null);
-        camera.startPreview();
-        camera.stopPreview();
-        setupCamera();
-
-        Log.i(TAG, "Starting camera preview");
-        camera.startPreview();
     }
 
     private void setupCamera() {
@@ -89,7 +88,7 @@ public class CameraView implements SurfaceHolder.Callback {
         cameraSize.width = cameraSupportedSizes.get(targetSizeIndex).width;
         cameraSize.height = cameraSupportedSizes.get(targetSizeIndex).height;
 
-        int targetFpsIndex = getClosestSupportedFpsIndex(FPS);
+        int targetFpsIndex = getClosestSupportedFpsIndex(30.0);
         int targetMinFps = cameraSupportedFps.get(targetFpsIndex)[0];
         int targetMaxFps = cameraSupportedFps.get(targetFpsIndex)[1];
 
@@ -107,6 +106,7 @@ public class CameraView implements SurfaceHolder.Callback {
         int bufferSize = cameraSize.width * cameraSize.height * pixelFormat.bitsPerPixel / 8;
 
         Log.i(TAG, "Pixel format NV21 bitsPerPixel=" + pixelFormat.bitsPerPixel + " bufferSize=" + bufferSize);
+        int buffersCount = 1;
         Log.i(TAG, "Allocating " + buffersCount + " preview buffers");
         for(int i = 0; i < buffersCount; i++) {
             byte[] buffer = new byte[bufferSize];

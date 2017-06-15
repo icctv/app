@@ -9,12 +9,12 @@ import com.google.gson.reflect.TypeToken;
 
 import java.util.List;
 
-public class NetworkController {
+class NetworkController {
 
     private static final String TAG = "NetworkController";
 
-    private static String BASE_URL = "http://192.168.1.107:8080";
-    private static String uuid;
+    private String BASE_URL = "http://192.168.1.107:8080";
+    private String uuid;
     private Callback callback;
 
     NetworkController(String uuid, Callback callback) {
@@ -22,7 +22,7 @@ public class NetworkController {
         this.callback = callback;
     }
 
-    public void hello() {
+    void hello() {
         Log.i(TAG, "POST /hello/{uuid}");
         AndroidNetworking.post(BASE_URL + "/hello/{uuid}")
             .addPathParameter("uuid", uuid)
@@ -49,7 +49,7 @@ public class NetworkController {
         HelloResponse() {}
     }
 
-    public interface Callback {
+    interface Callback {
         void onHello(NetworkController.HelloResponse hello);
     }
 }

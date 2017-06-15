@@ -1,14 +1,12 @@
 package gq.icctv.icctv;
 
 import android.content.Context;
-import android.graphics.Camera;
 import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.SurfaceView;
 import android.widget.LinearLayout;
 
-public class StreamingController implements Runnable, NetworkController.Callback, CameraView.Callback {
+class StreamingController implements Runnable, NetworkController.Callback, CameraView.Callback {
 
     private final static String TAG = "StreamingController";
 
@@ -22,14 +20,15 @@ public class StreamingController implements Runnable, NetworkController.Callback
     private Thread currentThread;
     private Handler mainHandler;
 
-    public enum Status {
+    enum Status {
         INITIAL,
         HELLO,
         INITIALIZING_CAMERA,
         INITIALIZING_ENCODER,
         STREAMING,
         STOPPING,
-        STOPPED
+        STOPPED,
+        ERROR
     }
 
     public interface Callback {
@@ -81,27 +80,60 @@ public class StreamingController implements Runnable, NetworkController.Callback
         stop();
     }
 
-
-    public void start() {
+    private void start() {
         Log.i(TAG, "Starting");
         setStatus(Status.HELLO);
         networkController.hello();
+
+        Log.i(TAG, "currendThread: " + currentThread.toString() + " === " + Thread.currentThread().toString());
     }
 
     @Override
     public void onHello(NetworkController.HelloResponse hello) {
         Log.i(TAG, "onHello");
-        setStatus(Status.INITIALIZING_CAMERA);
+
+        Log.i(TAG, "currendThread: " + currentThread.toString() + " === " + Thread.currentThread().toString());
+
+        if (hello == null) {
+            Log.e(TAG, "onHello returned null response (malformed JSON or server error)");
+            fail();
+            return;
+        }
 
         // TODO: Fallback to other ingest points
+        if (hello.in == null) {
+            Log.e(TAG, "Ingest points are null");
+            fail();
+            return;
+        }
         ingestPoint = hello.in.get(0);
 
-        // The width/height we received from the Relay is the resolution we'd like to use,
-        // but the camera might not support these exact values. This is why we have to wait until
-        // the onCameraReady callback where we get passed the actual supported closest resolution.
-        cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(ingestPoint.width, ingestPoint.height));
-        cameraView = new CameraView(cameraPreview, ingestPoint.width, ingestPoint.height, this);
-        cameraView.initializeSurface();
+        initializeCamera(ingestPoint.width, ingestPoint.height);
+    }
+
+    // The width/height is the resolution we'd like to use,
+    // but the camera might not support these exact values. This is why we have to wait until
+    // the onCameraReady callback where we get passed the actual supported closest resolution.
+    private void initializeCamera(final int width, final int height) {
+        setStatus(Status.INITIALIZING_CAMERA);
+
+        // Remember we can only touch the UI from the main thread
+        // TODO: Maybe call this again in onCameraReady to apply the actual dimensions to the preview?
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                cameraPreview.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+            }
+        });
+
+        try {
+            cameraView = new CameraView(cameraPreview, width, height, this);
+            cameraView.initializeSurface();
+        } catch (CameraView.InitializationException e) {
+            Log.e(TAG, "Failed to initialize camera surface");
+            fail();
+        }
+
     }
 
     // Okay, the camera has been initialized and here it tells us the actual resolution
@@ -111,14 +143,25 @@ public class StreamingController implements Runnable, NetworkController.Callback
         setStatus(Status.INITIALIZING_ENCODER);
 
         streamingEncoder = new StreamingEncoder(actualWidth, actualHeight, ingestPoint);
-        streamingEncoder.initialize();
 
-        setStatus(Status.STREAMING);
-        cameraView.setPreviewCallback(streamingEncoder);
+        try {
+            streamingEncoder.initialize();
+            setStatus(Status.STREAMING);
+            cameraView.setPreviewCallback(streamingEncoder);
+        } catch (StreamingEncoder.InitializationException e) {
+            fail();
+        }
     }
 
-    public void interrupt() {
+    void interrupt() {
         currentThread.interrupt();
+    }
+
+    private void fail() {
+        Log.e(TAG, "Retrying after error");
+        setStatus(Status.ERROR);
+        stop();
+        start();
     }
 
     private void stop() {

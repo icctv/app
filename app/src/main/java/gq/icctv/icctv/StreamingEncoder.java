@@ -3,7 +3,7 @@ package gq.icctv.icctv;
 import android.hardware.Camera;
 import android.util.Log;
 
-public class StreamingEncoder implements Camera.PreviewCallback {
+class StreamingEncoder implements Camera.PreviewCallback {
 
     private static final String TAG = "StreamingEncoder";
     private static final int FRAME_BUFFER_SIZE = (1024 * 1024);
@@ -12,13 +12,15 @@ public class StreamingEncoder implements Camera.PreviewCallback {
     private int actualWidth = 0;
     private IngestPoint ingestPoint;
 
-    public StreamingEncoder (int actualWidth, int actualHeight, IngestPoint ingestPoint) {
+    class InitializationException extends RuntimeException {}
+
+    StreamingEncoder (int actualWidth, int actualHeight, IngestPoint ingestPoint) {
         this.actualWidth = actualWidth;
         this.actualHeight = actualHeight;
         this.ingestPoint = ingestPoint;
     }
 
-    public boolean initialize() {
+    boolean initialize() throws InitializationException {
         Log.i(TAG, "Initializing encoder for preview surface w=" + actualWidth + " h=" + actualHeight + " streaming to " + ingestPoint.url);
 
         int outWidth = actualWidth;
@@ -28,7 +30,7 @@ public class StreamingEncoder implements Camera.PreviewCallback {
         int ok = nativeInitialize(actualWidth, actualHeight, outWidth, outHeight, bitrate, FRAME_BUFFER_SIZE, ingestPoint.url);
         if (ok != 1) {
             Log.e(TAG, "Failed to initialize native encoder, error code was: " + ok);
-            return false;
+            throw new InitializationException();
         }
 
         return true;

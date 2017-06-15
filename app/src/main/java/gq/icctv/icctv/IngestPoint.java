@@ -1,6 +1,6 @@
 package gq.icctv.icctv;
 
-public class IngestPoint {
+class IngestPoint {
     String protocol;
     String url;
     int width;
