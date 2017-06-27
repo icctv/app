@@ -11,6 +11,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.androidnetworking.AndroidNetworking;
@@ -18,9 +19,7 @@ import com.androidnetworking.AndroidNetworking;
 import java.io.IOException;
 
 import gq.icctv.icctv.server.http.CustomHttpServer;
-import gq.icctv.icctv.server.websocket.DebugWebSocketServer;
 import gq.icctv.icctv.server.websocket.MyHttpServer;
-import gq.icctv.icctv.server.websocket.NanoWSD;
 
 public class MainActivity extends AppCompatActivity implements StreamingController.Callback {
 
@@ -31,6 +30,7 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     private TextView statusText;
     private CustomHttpServer server;
     private MyHttpServer wsserver;
+    private StreamingMode streamingMode;
 
 
     @Override
@@ -57,6 +57,8 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         } else {
             permissionsManager.request();
         }
+
+        setSwitchText();
     }
 
     private void startStream() {
@@ -122,6 +124,22 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     public void debug(View btn) {
         stopStream();
         startStream();
+    }
+
+    public void modeSwitched(View view){
+        Log.d("Sw", "switched!");
+        setSwitchText();
+    }
+
+    private void setSwitchText(){
+        Switch sw = (Switch) findViewById(R.id.sw_nwmode);
+
+        if(sw.isChecked()){
+            streamingMode=StreamingMode.Internet;
+        }else{
+            streamingMode=StreamingMode.LocalNetwork;
+        }
+        sw.setText(streamingMode.toString());
     }
 
 }
