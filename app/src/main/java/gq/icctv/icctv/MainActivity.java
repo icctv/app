@@ -1,9 +1,11 @@
 package gq.icctv.icctv;
 
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.format.Formatter;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
@@ -12,6 +14,10 @@ import android.widget.TextView;
 
 import com.androidnetworking.AndroidNetworking;
 
+import java.io.IOException;
+
+import gq.icctv.icctv.server.http.MyServer;
+
 public class MainActivity extends AppCompatActivity implements StreamingController.Callback {
 
     private static final String TAG = "MainActivity";
@@ -19,6 +25,8 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     private StreamingController streamingController;
     private PermissionsManager permissionsManager;
     private TextView statusText;
+    private MyServer server;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +74,27 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     @Override
     public void onStatusChanged(StreamingController.Status status) {
         statusText.setText(status.toString());
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        int port = 1337;
+
+        WifiManager wifiMgr = (WifiManager) getSystemService(WIFI_SERVICE);
+        WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
+        int ip = wifiInfo.getIpAddress();
+        String ipAddress = Formatter.formatIpAddress(ip);
+
+        TextView tv = (TextView)findViewById(R.id.txt_address);
+        tv.setText(ipAddress +  ":" +  String.valueOf(port));
+
+        try {
+            server = new MyServer(port);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
