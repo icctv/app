@@ -4,10 +4,12 @@ import android.util.Log;
 
 import com.androidnetworking.AndroidNetworking;
 import com.androidnetworking.error.ANError;
+import com.androidnetworking.interfaces.JSONObjectRequestListener;
 import com.androidnetworking.interfaces.ParsedRequestListener;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.IOException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 class NetworkController {
@@ -28,7 +30,7 @@ class NetworkController {
 
     void hello() {
         Log.i(TAG, "POST /hello/{uuid}");
-        //Ping.ping("http://www.google.at",);
+
         AndroidNetworking.post(BASE_URL + "/hello/{uuid}")
             .addPathParameter("uuid", uuid)
             .build()
@@ -45,6 +47,30 @@ class NetworkController {
                     Log.e(TAG, "Response Body: " + anError.getErrorBody());
                 }
             });
+    }
+
+    void setPassword(String pw){
+        JSONObject jo = new JSONObject();
+        try{
+            jo.put("password", pw);
+        } catch (Exception e){
+            Log.d("json", e.getMessage());
+        }
+
+        AndroidNetworking.post(BASE_URL + "/protect/{uuid}")
+                .addPathParameter("uuid", uuid)
+                .addJSONObjectBody(jo)
+                .build()
+                .getAsJSONObject(new JSONObjectRequestListener() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+                    }
+                    @Override
+                    public void onError(ANError error) {
+                        Log.d("reddis-pw", error.getMessage());
+                    }
+                });
     }
 
     class HelloResponse {

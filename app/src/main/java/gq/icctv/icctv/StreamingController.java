@@ -173,4 +173,8 @@ class StreamingController implements Runnable, NetworkController.Callback, Camer
 
         setStatus(Status.STOPPED);
     }
+
+    public NetworkController getNetworkController(){
+        return this.networkController;
+    }
 }

@@ -11,8 +11,10 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.androidnetworking.AndroidNetworking;
 
@@ -140,6 +142,14 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
             streamingMode=StreamingMode.LocalNetwork;
         }
         sw.setText(streamingMode.toString());
+    }
+
+    public void setPassword(View view){
+        EditText et = (EditText) findViewById(R.id.etxt_password);
+        String val = et.getText().toString().trim();
+        streamingController.getNetworkController().setPassword(val);
+
+        Toast.makeText(getApplicationContext(), "Password set to '"+val+"'",Toast.LENGTH_LONG).show();
     }
 
 }
