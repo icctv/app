@@ -3,6 +3,7 @@ package gq.icctv.icctv.server.websocket;
 import android.util.Log;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import gq.icctv.icctv.server.http.IHTTPSession;
 
@@ -14,11 +15,13 @@ public class CustomWebSocket extends WebSocket {
 
     MyHttpServer httpServer;
     IHTTPSession httpSession;
+    String cwsId;
 
     public CustomWebSocket(IHTTPSession handshakeRequest, MyHttpServer httpServer) {
         super(handshakeRequest);
         this.httpSession = handshakeRequest;
         this.httpServer = httpServer;
+        this.cwsId = UUID.randomUUID().toString();
     }
 
     @Override
@@ -35,7 +38,8 @@ public class CustomWebSocket extends WebSocket {
 
     @Override
     protected void onMessage(WebSocketFrame message) {
-        Log.d("WS-Msg", message.toString());
+        Log.d("WS-Msg", message.toString() + " + " + this.cwsId);
+        httpServer.distributeMessage(message, this);
     }
 
     @Override
