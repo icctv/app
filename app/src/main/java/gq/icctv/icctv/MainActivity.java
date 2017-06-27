@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         int httpPort = 1337;
         int websocketPort = 1338;
 
+        //start Http Server
         try {
             server = new CustomHttpServer(httpPort);
         } catch (IOException e) {
@@ -95,8 +96,6 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         }
 
         //Start socket
-
-        //NanoWSD ws = new DebugWebSocketServer(websocketPort,true);
         try {
             wsserver = new MyHttpServer(getApplicationContext(), websocketPort);
             wsserver.start();
@@ -104,31 +103,14 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
             e.printStackTrace();
         }
 
-        /*
-        try {
-            ws.start();
-
-            Log.d("WS", "WebSocket started!!!");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-
-        WifiManager wifiMgr = (WifiManager) getSystemService(WIFI_SERVICE);
+        //print addresses
+        WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
         int ip = wifiInfo.getIpAddress();
         String ipAddress = Formatter.formatIpAddress(ip);
 
         TextView tv = (TextView)findViewById(R.id.txt_address);
         tv.setText("Http:    " + ipAddress +  ":" +  String.valueOf(httpPort) + "\nSocket: " + ipAddress + ":" + websocketPort);
-
-        //while(ws.isAlive());
-
-        try {
-            System.in.read();
-        } catch (Exception e) {
-            Log.d("websocket", e.getMessage());
-        }
-        //ws.stop();
     }
 
     @Override
