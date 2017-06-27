@@ -1,20 +1,24 @@
 package gq.icctv.icctv.server.http;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import gq.icctv.icctv.server.http.response.Response;
+import gq.icctv.icctv.server.websocket.CustomWebSocket;
+import gq.icctv.icctv.server.websocket.WebSocket;
 
 /**
  * Created by Richard on 09/06/2017.
  */
 
-public class MyServer extends NanoHTTPD {
+public class CustomHttpServer extends NanoHTTPD {
 
-    public MyServer(int port) throws IOException {
+
+    public CustomHttpServer(int port) throws IOException {
         super(port);
         start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
-        System.out.println("\nRunning! Point your browsers to http://localhost:1470/ \n");
     }
 
     @Override

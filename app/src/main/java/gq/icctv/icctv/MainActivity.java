@@ -6,6 +6,7 @@ import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.format.Formatter;
+import android.util.Log;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
@@ -16,7 +17,10 @@ import com.androidnetworking.AndroidNetworking;
 
 import java.io.IOException;
 
-import gq.icctv.icctv.server.http.MyServer;
+import gq.icctv.icctv.server.http.CustomHttpServer;
+import gq.icctv.icctv.server.websocket.DebugWebSocketServer;
+import gq.icctv.icctv.server.websocket.MyHttpServer;
+import gq.icctv.icctv.server.websocket.NanoWSD;
 
 public class MainActivity extends AppCompatActivity implements StreamingController.Callback {
 
@@ -25,7 +29,8 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     private StreamingController streamingController;
     private PermissionsManager permissionsManager;
     private TextView statusText;
-    private MyServer server;
+    private CustomHttpServer server;
+    private MyHttpServer wsserver;
 
 
     @Override
@@ -80,7 +85,33 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     public void onResume(){
         super.onResume();
 
-        int port = 1337;
+        int httpPort = 1337;
+        int websocketPort = 1338;
+
+        try {
+            server = new CustomHttpServer(httpPort);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //Start socket
+
+        //NanoWSD ws = new DebugWebSocketServer(websocketPort,true);
+        try {
+            wsserver = new MyHttpServer(getApplicationContext(), websocketPort);
+            wsserver.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        /*
+        try {
+            ws.start();
+
+            Log.d("WS", "WebSocket started!!!");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
 
         WifiManager wifiMgr = (WifiManager) getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
@@ -88,13 +119,16 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         String ipAddress = Formatter.formatIpAddress(ip);
 
         TextView tv = (TextView)findViewById(R.id.txt_address);
-        tv.setText(ipAddress +  ":" +  String.valueOf(port));
+        tv.setText("Http:    " + ipAddress +  ":" +  String.valueOf(httpPort) + "\nSocket: " + ipAddress + ":" + websocketPort);
+
+        //while(ws.isAlive());
 
         try {
-            server = new MyServer(port);
-        } catch (IOException e) {
-            e.printStackTrace();
+            System.in.read();
+        } catch (Exception e) {
+            Log.d("websocket", e.getMessage());
         }
+        //ws.stop();
     }
 
     @Override
