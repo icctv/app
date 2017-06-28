@@ -109,9 +109,17 @@
                 android:text="Password: "/>
 
             <EditText
-                android:layout_width="50dp"
+                android:layout_width="250dp"
                 android:layout_height="wrap_content"
                 android:id="@+id/etxt_password" />
+
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
             <Button
                 android:layout_width="wrap_content"
@@ -120,7 +128,17 @@
                 android:onClick="setPassword"
                 android:id="@+id/btn_set_pw"/>
 
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="delete password"
+                android:onClick="deletePassword"
+                android:id="@+id/btn_delete_pw"/>
+
         </LinearLayout>
+
+
+
 
 
     </LinearLayout>

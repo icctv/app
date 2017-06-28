@@ -73,6 +73,22 @@ class NetworkController {
                 });
     }
 
+    void deletePassword(){
+        AndroidNetworking.delete(BASE_URL + "/protect/{uuid}")
+                .addPathParameter("uuid", uuid)
+                .build()
+                .getAsJSONObject(new JSONObjectRequestListener() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+                    }
+                    @Override
+                    public void onError(ANError error) {
+                        Log.d("reddis-pw", error.getMessage());
+                    }
+                });
+    }
+
     class HelloResponse {
         String out;
         List<IngestPoint> in;

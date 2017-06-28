@@ -152,4 +152,10 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         Toast.makeText(getApplicationContext(), "Password set to '"+val+"'",Toast.LENGTH_LONG).show();
     }
 
+    public void deletePassword(View view){
+        streamingController.getNetworkController().deletePassword();
+
+        Toast.makeText(getApplicationContext(), "Password deleted!", Toast.LENGTH_LONG).show();
+    }
+
 }
