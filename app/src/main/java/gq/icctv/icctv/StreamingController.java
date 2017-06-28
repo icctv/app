@@ -33,6 +33,8 @@ class StreamingController implements Runnable, NetworkController.Callback, Camer
 
     public interface Callback {
         void onStatusChanged(Status status);
+        void onUrlChanged(String url);
+
     }
 
     StreamingController(String uuid, SurfaceView cameraPreview, Callback statusCallback) {
@@ -51,6 +53,16 @@ class StreamingController implements Runnable, NetworkController.Callback, Camer
             @Override
             public void run() {
                 statusCallback.onStatusChanged(newStatus);
+            }
+        });
+    }
+
+    private void setChannelUrl(final String url){
+        Log.i(TAG, "new url appeared");
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                statusCallback.onUrlChanged(url);
             }
         });
     }
@@ -92,7 +104,10 @@ class StreamingController implements Runnable, NetworkController.Callback, Camer
     public void onHello(NetworkController.HelloResponse hello) {
         Log.i(TAG, "onHello");
 
-        Log.i(TAG, "currendThread: " + currentThread.toString() + " === " + Thread.currentThread().toString());
+        Log.i(TAG, "currentThread: " + currentThread.toString() + " === " + Thread.currentThread().toString());
+
+        Log.d(TAG, hello.out);
+        setChannelUrl(hello.out);
 
         if (hello == null) {
             Log.e(TAG, "onHello returned null response (malformed JSON or server error)");

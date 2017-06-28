@@ -17,7 +17,8 @@ class NetworkController {
     private static final String TAG = "NetworkController";
 
     //private String BASE_URL = "http://192.168.1.107:8080";
-    private String BASE_URL = "http://10.0.0.141:8080";
+    //private String BASE_URL = "http://10.0.0.141:8080";
+    private String BASE_URL = "http://relay.icctv.gq";
     //private String BASE_URL = "http://google.com";
     //private String BASE_URL = "http://172.20.10.2:8080";
     private String uuid;
