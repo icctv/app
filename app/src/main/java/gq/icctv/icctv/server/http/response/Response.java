@@ -129,7 +129,7 @@ public class Response implements Closeable {
         "rawtypes",
         "unchecked"
     })
-    protected Response(IStatus status, String mimeType, InputStream data, long totalBytes) {
+    public Response(IStatus status, String mimeType, InputStream data, long totalBytes) {
         this.status = status;
         this.mimeType = mimeType;
         if (data == null) {

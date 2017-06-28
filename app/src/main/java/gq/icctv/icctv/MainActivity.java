@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
 
         //start Http Server
         try {
-            server = new CustomHttpServer(httpPort);
+            server = new CustomHttpServer(httpPort, getApplicationContext());
         } catch (IOException e) {
             e.printStackTrace();
         }
