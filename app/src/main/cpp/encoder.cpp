@@ -57,6 +57,18 @@ extern "C" {
                                                                                 jstring ingestUrlString) {
         LOGI(TAG, "Initializing");
 
+        const char *ingestUrlTmp = env->GetStringUTFChars(ingestUrlString, JNI_FALSE);
+        char ingestUrl[2000];
+        strcpy(ingestUrl, ingestUrlTmp);
+        env->ReleaseStringUTFChars(ingestUrlString, ingestUrlTmp);
+
+        LOGI(TAG, "in=%dx%d out=%dx%d bitrate=%d frame_buffer_size=%d ingest=%s",
+             in_width, in_height,
+             out_width, out_height,
+             bitrate,
+             frame_buffer_size,
+             ingestUrl);
+
         // This holds errors of libav
         int err = 0;
         char errbuf[100];
@@ -177,11 +189,6 @@ extern "C" {
              self->muxer->oformat->flags & AVFMT_NOFILE ? 1 : 0,
              self->muxer->oformat->flags & AVFMT_NOSTREAMS ? 1 : 0);
 
-        const char *ingestUrlTmp = env->GetStringUTFChars(ingestUrlString, JNI_FALSE);
-        char ingestUrl[2000];
-        strcpy(ingestUrl, ingestUrlTmp);
-        env->ReleaseStringUTFChars(ingestUrlString, ingestUrlTmp);
-
         LOGI(TAG, "Opening mpegts http stream");
 //        int output_buffer_size = 4096   ;
 //        self->output_buffer = (uint8_t *) av_malloc(output_buffer_size);
@@ -247,6 +254,23 @@ extern "C" {
         return 1;
     }
 
+    void finish_encode(JNIEnv *env, jbyteArray pixelsBuffer, uint8_t* pixels, jobject camera, int64_t time_start) {
+
+        if (pixels) {
+            // Free the array without copying back changes ("abort")
+            env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
+        }
+
+        if (camera && pixelsBuffer) {
+            // Give back the buffer to be filled again
+            env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
+        }
+
+        av_packet_unref(&self->packet);
+
+        measurePerformance(time_start);
+    }
+
     JNIEXPORT void JNICALL Java_gq_icctv_icctv_StreamingEncoder_onPreviewFrame(JNIEnv *env, jobject streamingEncoderInstance, jbyteArray pixelsBuffer, jobject camera) {
         int64_t time_start = getTimeNsec();
 
@@ -254,7 +278,7 @@ extern "C" {
 
         if (length < 1000) {
             LOGE(TAG, "Received only %d pixels", length);
-            return;
+            return finish_encode(env, pixelsBuffer, NULL, camera, time_start);
         }
 
         uint8_t *pixels = (uint8_t *) env->GetByteArrayElements(pixelsBuffer, NULL);
@@ -272,15 +296,15 @@ extern "C" {
         // In NV21, each of the two planes have the same stride (=width)
         int in_linesize[2] = { stride, stride };
 
-        // LOGI(TAG, "Scaling in_linesize=%d~%d, in_height=%d, in_width=%d, frame_linesize=%d~%d",
-        //     in_linesize[0],
-        //     in_linesize[1],
-        //     self->in_height,
-        //     self->in_width,
-        //     self->frame->linesize[0],
-        //     self->frame->linesize[1]);
+        LOGI(TAG, "Scaling in_linesize=%d~%d, in_height=%d, in_width=%d, frame_linesize=%d~%d",
+             in_linesize[0],
+             in_linesize[1],
+             self->in_height,
+             self->in_width,
+             self->frame->linesize[0],
+             self->frame->linesize[1]);
 
-        // LOGI(TAG, "Scaling in_data[0]=%u, in_data[1]=%u", (unsigned int) pixels[0], (unsigned int) pixels[1]);
+        LOGI(TAG, "Scaling in_data[0]=%u, in_data[1]=%u", (unsigned int) pixels[0], (unsigned int) pixels[1]);
 
         // Perform pixel format conversion from NV21 to YV12 (YUV420P)
         // Scaling is fast (~1ms), don't worry about bottleneck here
@@ -292,7 +316,10 @@ extern "C" {
                   self->frame->data,
                   self->frame->linesize);
 
-        // LOGI(TAG, "Scaler returned output height %d", out_height);
+        if (out_height <= 0) {
+            LOGI(TAG, "Scaler returned output height %d", out_height);
+            return finish_encode(env, pixelsBuffer, pixels, camera, time_start);
+        }
 
         self->frame->pts++;
         av_init_packet(&self->packet);
@@ -306,6 +333,7 @@ extern "C" {
 
                 if (av_interleaved_write_frame(self->muxer, &self->packet) < 0) {
                     LOGE(TAG, "Failed to mux packet");
+                    return finish_encode(env, pixelsBuffer, pixels, camera, time_start);
                 }
 
 //                LOGI(TAG, "Maximum buffer size in bytes=%d", self->muxer->pb->buffer_size);
@@ -348,20 +376,14 @@ extern "C" {
             } else {
                 LOGI(TAG, "Skipping callback because encoded frame size %d is zero or does not fit into maximum buffer size %d",
                      self->packet.size, max_frame_buffer_size);
+                return finish_encode(env, pixelsBuffer, pixels, camera, time_start);
             }
         } else {
             LOGE(TAG, "Failed to encode frame");
+            return finish_encode(env, pixelsBuffer, pixels, camera, time_start);
         }
 
-        // Free the array without copying back changes ("abort")
-        env->ReleaseByteArrayElements(pixelsBuffer, (jbyte *) pixels, JNI_ABORT);
-
-        // Give back the buffer to be filled again
-        env->CallVoidMethod(camera, addCallbackBuffer, pixelsBuffer);
-
-        av_packet_unref(&self->packet);
-
-        measurePerformance(time_start);
+        finish_encode(env, pixelsBuffer, pixels, camera, time_start);
     }
 
 
