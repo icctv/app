@@ -86,7 +86,13 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
     }
 
     @Override
-    public void onResume(){
+    public void onUrlChanged(String url) {
+        TextView tv = (TextView)findViewById(R.id.txt_channel);
+        tv.setText(url);
+    }
+
+    @Override
+    public void onResume() {
         super.onResume();
 
         int httpPort = 1337;
@@ -111,6 +117,7 @@ public class MainActivity extends AppCompatActivity implements StreamingControll
         WifiManager wifiMgr = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
         WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
         int ip = wifiInfo.getIpAddress();
+
         String ipAddress = Formatter.formatIpAddress(ip);
 
         TextView tv = (TextView)findViewById(R.id.txt_address);

@@ -35,19 +35,6 @@ public class CustomHttpServer extends NanoHTTPD {
         start(NanoHTTPD.SOCKET_READ_TIMEOUT, false);
     }
 
-    /*
-    @Override
-    public Response serve(IHTTPSession session) {
-        String msg = "<html><body><h1>Hello server</h1>\n";
-        Map<String, String> parms = session.getParms();
-        if (parms.get("username") == null) {
-            msg += "<form action='?' method='get'>\n  <p>Your name: <input type='text' name='username'></p>\n" + "</form>\n";
-        } else {
-            msg += "<p>Hello, " + parms.get("username") + "!</p>";
-        }
-        return Response.newFixedLengthResponse(msg + "</body></html>\n");
-    }*/
-
     @Override
     public Response serve(IHTTPSession ihs){
         String uri = ihs.getUri();
@@ -93,23 +80,5 @@ public class CustomHttpServer extends NanoHTTPD {
 
 
         return r;
-    }
-
-    public byte[] readBytes(InputStream inputStream) throws IOException {
-        // this dynamically extends to take the bytes you read
-        ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream();
-
-        // this is storage overwritten on each iteration with bytes
-        int bufferSize = 1024;
-        byte[] buffer = new byte[bufferSize];
-
-        // we need to know how may bytes were read to write them to the byteBuffer
-        int len = 0;
-        while ((len = inputStream.read(buffer)) != -1) {
-            byteBuffer.write(buffer, 0, len);
-        }
-
-        // and then we can return your byte array.
-        return byteBuffer.toByteArray();
     }
 }
